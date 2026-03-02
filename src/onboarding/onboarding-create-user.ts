@@ -15,19 +15,25 @@ import type {
 import { onboardUserStep } from "../data/onboarding";
 import type { ValueChangedEvent } from "../types";
 import { onBoardingStyles } from "./styles";
+import { gaBrandingStyles } from "./ga-branding";
 
-const CHECK_USERNAME_REGEX = /\s|[A-Z]/;
+/** German labels for the create-user form fields. */
+const FIELD_LABELS: Record<string, string> = {
+  email: "E-Mail-Adresse",
+  password: "Passwort",
+  password_confirm: "Passwort bestätigen",
+};
+
+const FIELD_HELPERS: Record<string, string> = {
+  password:
+    "Wähle ein sicheres Passwort. Merke es dir gut, damit du es nicht vergisst.",
+};
 
 const CREATE_USER_SCHEMA: HaFormSchema[] = [
   {
-    name: "name",
+    name: "email",
     required: true,
-    selector: { text: { autocomplete: "name" } },
-  },
-  {
-    name: "username",
-    required: true,
-    selector: { text: { autocomplete: "username" } },
+    selector: { text: { type: "email", autocomplete: "email" } },
   },
   {
     name: "password",
@@ -59,8 +65,8 @@ class OnboardingCreateUser extends LitElement {
 
   protected render(): TemplateResult {
     return html`
-      <h1>${this.localize("ui.panel.page-onboarding.user.header")}</h1>
-      <p>${this.localize("ui.panel.page-onboarding.user.intro")}</p>
+      <h1 class="ga-header">Benutzerkonto erstellen</h1>
+      <p>Erstelle ein Benutzerkonto, um deinen iHost zu verwalten.</p>
 
       ${this._errorMsg
         ? html`<ha-alert alert-type="error">${this._errorMsg}</ha-alert>`
@@ -79,13 +85,12 @@ class OnboardingCreateUser extends LitElement {
         <ha-button
           @click=${this._submitForm}
           .disabled=${this._loading ||
-          !this._newUser.name ||
-          !this._newUser.username ||
+          !this._newUser.email ||
           !this._newUser.password ||
           !this._newUser.password_confirm ||
           this._newUser.password !== this._newUser.password_confirm}
         >
-          ${this.localize("ui.panel.page-onboarding.user.create_account")}
+          Konto erstellen
         </ha-button>
       </div>
     `;
@@ -97,8 +102,7 @@ class OnboardingCreateUser extends LitElement {
     this.addEventListener("keypress", (ev) => {
       if (
         ev.key === "Enter" &&
-        this._newUser.name &&
-        this._newUser.username &&
+        this._newUser.email &&
         this._newUser.password &&
         this._newUser.password_confirm &&
         this._newUser.password === this._newUser.password_confirm
@@ -108,37 +112,29 @@ class OnboardingCreateUser extends LitElement {
     });
   }
 
-  private _computeLabel(localize) {
+  private _computeLabel(_localize) {
     return (schema: HaFormSchema) =>
-      localize(`ui.panel.page-onboarding.user.data.${schema.name}`);
+      FIELD_LABELS[schema.name] ?? schema.name;
   }
 
-  private _computeHelper(localize) {
+  private _computeHelper(_localize) {
     return (schema: HaFormSchema) =>
-      localize(`ui.panel.page-onboarding.user.helper.${schema.name}`);
+      FIELD_HELPERS[schema.name] ?? "";
   }
 
   private _handleValueChanged(
     ev: ValueChangedEvent<HaFormDataContainer>
   ): void {
-    const nameChanged = ev.detail.value.name !== this._newUser.name;
-    const usernameChanged = ev.detail.value.username !== this._newUser.username;
     const passwordChanged =
       ev.detail.value.password !== this._newUser.password ||
       ev.detail.value.password_confirm !== this._newUser.password_confirm;
     this._newUser = ev.detail.value;
-    if (nameChanged) {
-      this._maybePopulateUsername();
-    }
     if (passwordChanged) {
       if (this._formError.password_confirm) {
         this._checkPasswordMatch();
       } else {
         this._debouncedCheckPasswordMatch();
       }
-    }
-    if (usernameChanged) {
-      this._checkUsername();
     }
   }
 
@@ -152,37 +148,9 @@ class OnboardingCreateUser extends LitElement {
     this._formError.password_confirm =
       this._newUser.password_confirm &&
       this._newUser.password !== this._newUser.password_confirm
-        ? this.localize(
-            "ui.panel.page-onboarding.user.error.password_not_match"
-          )
+        ? "Passwörter stimmen nicht überein"
         : "";
     if (old !== this._formError.password_confirm) {
-      this.requestUpdate("_formError");
-    }
-  }
-
-  private _maybePopulateUsername(): void {
-    if (!this._newUser.name || this._newUser.name === this._newUser.username) {
-      return;
-    }
-
-    const parts = String(this._newUser.name).split(" ");
-    if (parts.length) {
-      this._newUser.username = parts[0].toLowerCase();
-      this._checkUsername();
-    }
-  }
-
-  private _checkUsername(): void {
-    const old = this._formError.username;
-    if (CHECK_USERNAME_REGEX.test(this._newUser.username as string)) {
-      this._formError.username = this.localize(
-        "ui.panel.page-onboarding.user.error.username_not_normalized"
-      );
-    } else {
-      this._formError.username = "";
-    }
-    if (old !== this._formError.username) {
       this.requestUpdate("_formError");
     }
   }
@@ -194,11 +162,14 @@ class OnboardingCreateUser extends LitElement {
 
     try {
       const clientId = genClientId();
+      const email = String(this._newUser.email);
+      // Use the part before @ as display name, email as username
+      const displayName = email.split("@")[0];
 
       const result = await onboardUserStep({
         client_id: clientId,
-        name: String(this._newUser.name),
-        username: String(this._newUser.username),
+        name: displayName,
+        username: email,
         password: String(this._newUser.password),
         language: this.language,
       });
@@ -216,7 +187,7 @@ class OnboardingCreateUser extends LitElement {
   }
 
   static get styles(): CSSResultGroup {
-    return onBoardingStyles;
+    return [onBoardingStyles, gaBrandingStyles];
   }
 }
 

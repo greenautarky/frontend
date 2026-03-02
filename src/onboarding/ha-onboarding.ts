@@ -29,7 +29,6 @@ import type { OnboardingResponses, OnboardingStep } from "../data/onboarding";
 import {
   fetchInstallationType,
   fetchOnboardingOverview,
-  onboardIntegrationStep,
 } from "../data/onboarding";
 import { subscribeUser } from "../data/ws-user";
 import { litLocalizeLiteMixin } from "../mixins/lit-localize-lite-mixin";
@@ -39,9 +38,10 @@ import { storeState } from "../util/ha-pref-storage";
 import { registerServiceWorker } from "../util/register-service-worker";
 import "./onboarding-analytics";
 import "./onboarding-create-user";
+import "./onboarding-gdpr";
+import "./onboarding-custom-pages";
 import "./onboarding-loading";
 import "./onboarding-welcome";
-import "./onboarding-welcome-links";
 import { makeDialogManager } from "../dialogs/make-dialog-manager";
 import { navigate } from "../common/navigate";
 import { mainWindow } from "../common/dom/get_main_window";
@@ -52,15 +52,14 @@ type OnboardingEvent =
       result?: { restore: "upload" | "cloud" };
     }
   | {
+      type: "gdpr";
+    }
+  | {
       type: "user";
       result: OnboardingResponses["user"];
     }
   | {
-      type: "core_config";
-      result: OnboardingResponses["core_config"];
-    }
-  | {
-      type: "integration";
+      type: "custom_pages";
     }
   | {
       type: "analytics";
@@ -131,12 +130,6 @@ class HaOnboarding extends litLocalizeLiteMixin(HassElement) {
       <ha-card>
         <div class="card-content">${this._renderStep()}</div>
       </ha-card>
-      ${this._init && !this._restoring
-        ? html`<onboarding-welcome-links
-            .localize=${this.localize}
-            .mobileApp=${this._mobileApp}
-          ></onboarding-welcome-links>`
-        : nothing}
       <div class="footer">
         <ha-language-picker
           .value=${this.language}
@@ -175,6 +168,11 @@ class HaOnboarding extends litLocalizeLiteMixin(HassElement) {
     if (this._loading || !step) {
       return html`<onboarding-loading></onboarding-loading>`;
     }
+    if (step.step === "gdpr") {
+      return html`<onboarding-gdpr
+        .localize=${this.localize}
+      ></onboarding-gdpr>`;
+    }
     if (step.step === "user") {
       return html`<onboarding-create-user
         .localize=${this.localize}
@@ -182,12 +180,12 @@ class HaOnboarding extends litLocalizeLiteMixin(HassElement) {
       >
       </onboarding-create-user>`;
     }
-    if (step.step === "core_config") {
+    if (step.step === "custom_pages") {
       return html`
-        <onboarding-core-config
+        <onboarding-custom-pages
           .hass=${this.hass}
-          .onboardingLocalize=${this.localize}
-        ></onboarding-core-config>
+          .localize=${this.localize}
+        ></onboarding-custom-pages>
       `;
     }
     if (step.step === "analytics") {
@@ -198,22 +196,17 @@ class HaOnboarding extends litLocalizeLiteMixin(HassElement) {
         ></onboarding-analytics>
       `;
     }
-    if (step.step === "integration") {
-      return html`
-        <onboarding-integrations
-          .hass=${this.hass}
-          .onboardingLocalize=${this.localize}
-        ></onboarding-integrations>
-      `;
-    }
     return nothing;
   }
 
   protected firstUpdated(changedProps: PropertyValues) {
     super.firstUpdated(changedProps);
+    // Default to German if no language was previously selected
+    if (!window.localStorage.getItem("selectedLanguage")) {
+      this.language = "de";
+      window.localStorage.setItem("selectedLanguage", JSON.stringify("de"));
+    }
     this._fetchOnboardingSteps();
-    import("./onboarding-integrations");
-    import("./onboarding-core-config");
     import("./onboarding-restore-backup");
     registerServiceWorker(this, false);
     this.addEventListener("onboarding-step", (ev) => this._handleStepDone(ev));
@@ -351,20 +344,25 @@ class HaOnboarding extends litLocalizeLiteMixin(HassElement) {
       step.step === stepResult.type ? { ...step, done: true } : step
     );
 
+    const stepCount = this._steps!.length;
+
     if (stepResult.type === "init") {
       this._init = false;
       this._restoring = stepResult.result?.restore;
       if (!this._restoring) {
-        this._progress = 0.25;
+        this._progress = 1 / stepCount;
       } else {
         navigate(
           `${location.pathname}?${addSearchParam({ page: `restore_backup${this._restoring === "cloud" ? "_cloud" : ""}` })}`
         );
       }
+    } else if (stepResult.type === "gdpr") {
+      this._progress = 1 / stepCount;
+      // GDPR accepted, proceed to user creation
     } else if (stepResult.type === "user") {
       const result = stepResult.result as OnboardingResponses["user"];
       this._loading = true;
-      this._progress = 0.5;
+      this._progress = 2 / stepCount;
       enableWrite();
       try {
         const auth = await getAuth({
@@ -380,16 +378,14 @@ class HaOnboarding extends litLocalizeLiteMixin(HassElement) {
       } finally {
         this._loading = false;
       }
-    } else if (stepResult.type === "core_config") {
-      this._progress = 0.75;
-      // We do nothing
+    } else if (stepResult.type === "custom_pages") {
+      this._progress = 3 / stepCount;
+      // Custom pages viewed, proceed to analytics
     } else if (stepResult.type === "analytics") {
       this._progress = 1;
-      // We do nothing
-    } else if (stepResult.type === "integration") {
+      // Analytics done - onboarding complete, redirect to dashboard
       this._loading = true;
 
-      // Determine if oauth redirect has been provided
       const externalAuthParams =
         extractSearchParamsObject() as AuthUrlSearchParams;
       const authParams =
@@ -406,40 +402,13 @@ class HaOnboarding extends litLocalizeLiteMixin(HassElement) {
               ),
             };
 
-      let result: OnboardingResponses["integration"];
-
-      try {
-        result = await onboardIntegrationStep(this.hass!, {
-          client_id: authParams.client_id!,
-          redirect_uri: authParams.redirect_uri!,
-        });
-      } catch (err: any) {
-        this.hass!.connection.close();
-        await this.hass!.auth.revoke();
-
-        alert(`Unable to finish onboarding: ${err.message}`);
-
-        document.location.assign("/?");
-        return;
-      }
-
-      // If we don't close the connection manually, the connection will be
-      // closed when we navigate away from the page. Firefox allows JS to
-      // continue to execute, and so HAWS will automatically reconnect once
-      // the connection is closed. However, since we revoke our token below,
-      // HAWS will reload the page, since that will trigger the auth flow.
-      // In Firefox, triggering a reload will overrule the navigation that
-      // was in progress.
+      // Close and re-auth to finalize onboarding
       this.hass!.connection.close();
-
-      // Revoke current auth token.
       await this.hass!.auth.revoke();
 
-      // Build up the url to redirect to
       let redirectUrl = authParams.redirect_uri!;
       redirectUrl +=
-        (redirectUrl.includes("?") ? "&" : "?") +
-        `code=${encodeURIComponent(result.auth_code)}&storeToken=true`;
+        (redirectUrl.includes("?") ? "&" : "?") + "storeToken=true";
 
       if (authParams.state) {
         redirectUrl += `&state=${encodeURIComponent(authParams.state)}`;
