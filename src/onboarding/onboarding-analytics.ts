@@ -6,9 +6,13 @@ import { fireEvent } from "../common/dom/fire_event";
 import type { LocalizeFunc } from "../common/translations/localize";
 import "../components/ha-analytics";
 import "../components/ha-button";
+import "../components/ha-settings-row";
+import "../components/ha-switch";
 import "../components/ha-svg-icon";
 import type { Analytics } from "../data/analytics";
 import { setAnalyticsPreferences } from "../data/analytics";
+import type { GATelemetryPreferences } from "../data/greenautarky_telemetry";
+import { setGATelemetryPreferences } from "../data/greenautarky_telemetry";
 import { onboardAnalyticsStep } from "../data/onboarding";
 import type { HomeAssistant } from "../types";
 import { documentationUrl } from "../util/documentation-url";
@@ -24,6 +28,11 @@ class OnboardingAnalytics extends LitElement {
 
   @state() private _analyticsDetails: Analytics = {
     preferences: {},
+  };
+
+  @state() private _gaPrefs: GATelemetryPreferences = {
+    error_logs: false,
+    metrics: false,
   };
 
   protected render(): TemplateResult {
@@ -47,6 +56,42 @@ class OnboardingAnalytics extends LitElement {
         .analytics=${this._analyticsDetails}
       >
       </ha-analytics>
+
+      <div class="ga-section">
+        <div class="ga-header">
+          <img
+            src="/static/icons/favicon-192x192.png"
+            alt="greenautarky"
+            class="ga-logo"
+          />
+          <h2>greenautarky Telemetrie</h2>
+        </div>
+        <ha-settings-row>
+          <span slot="heading">Fehlerberichte</span>
+          <span slot="description">
+            Fehlerprotokolle an greenautarky senden
+          </span>
+          <ha-switch
+            .checked=${this._gaPrefs.error_logs}
+            @change=${this._gaErrorLogsChanged}
+            name="ga_error_logs"
+          >
+          </ha-switch>
+        </ha-settings-row>
+        <ha-settings-row>
+          <span slot="heading">Metriken</span>
+          <span slot="description">
+            Systemmetriken an greenautarky senden
+          </span>
+          <ha-switch
+            .checked=${this._gaPrefs.metrics}
+            @change=${this._gaMetricsChanged}
+            name="ga_metrics"
+          >
+          </ha-switch>
+        </ha-settings-row>
+      </div>
+
       ${this._error ? html`<div class="error">${this._error}</div>` : ""}
       <div class="footer">
         <ha-button @click=${this._save} .disabled=${!this._analyticsDetails}>
@@ -72,6 +117,16 @@ class OnboardingAnalytics extends LitElement {
     };
   }
 
+  private _gaErrorLogsChanged(ev: Event): void {
+    const target = ev.currentTarget as HTMLInputElement;
+    this._gaPrefs = { ...this._gaPrefs, error_logs: target.checked };
+  }
+
+  private _gaMetricsChanged(ev: Event): void {
+    const target = ev.currentTarget as HTMLInputElement;
+    this._gaPrefs = { ...this._gaPrefs, metrics: target.checked };
+  }
+
   private async _save(ev) {
     ev.preventDefault();
     try {
@@ -79,6 +134,8 @@ class OnboardingAnalytics extends LitElement {
         this.hass,
         this._analyticsDetails!.preferences
       );
+
+      await setGATelemetryPreferences(this.hass, this._gaPrefs);
 
       await onboardAnalyticsStep(this.hass);
       fireEvent(this, "onboarding-step", {
@@ -100,6 +157,30 @@ class OnboardingAnalytics extends LitElement {
           color: var(--primary-color);
           text-decoration: none;
           --mdc-icon-size: 14px;
+        }
+        .ga-section {
+          margin-top: 24px;
+          padding-top: 24px;
+          border-top: 1px solid var(--divider-color);
+        }
+        .ga-header {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 8px;
+        }
+        .ga-header h2 {
+          margin: 0;
+          font-size: var(--ha-font-size-xl);
+          font-weight: var(--ha-font-weight-normal);
+        }
+        .ga-logo {
+          width: 32px;
+          height: 32px;
+          border-radius: 4px;
+        }
+        ha-settings-row {
+          padding: 0;
         }
       `,
     ];
