@@ -1,6 +1,6 @@
 import { genClientId } from "home-assistant-js-websocket";
 import type { CSSResultGroup, PropertyValues, TemplateResult } from "lit";
-import { html, LitElement } from "lit";
+import { css, html, LitElement } from "lit";
 import { customElement, property, query, state } from "lit/decorators";
 import { fireEvent } from "../common/dom/fire_event";
 import type { LocalizeFunc } from "../common/translations/localize";
@@ -20,6 +20,7 @@ import { gaBrandingStyles } from "./ga-branding";
 /** German labels for the create-user form fields. */
 const FIELD_LABELS: Record<string, string> = {
   email: "E-Mail-Adresse",
+  username: "Benutzername",
   password: "Passwort",
   password_confirm: "Passwort bestätigen",
 };
@@ -29,12 +30,7 @@ const FIELD_HELPERS: Record<string, string> = {
     "Wähle ein sicheres Passwort. Merke es dir gut, damit du es nicht vergisst.",
 };
 
-const CREATE_USER_SCHEMA: HaFormSchema[] = [
-  {
-    name: "email",
-    required: true,
-    selector: { text: { type: "email", autocomplete: "email" } },
-  },
+const PASSWORD_FIELDS: HaFormSchema[] = [
   {
     name: "password",
     required: true,
@@ -47,11 +43,31 @@ const CREATE_USER_SCHEMA: HaFormSchema[] = [
   },
 ];
 
+const EMAIL_SCHEMA: HaFormSchema[] = [
+  {
+    name: "email",
+    required: true,
+    selector: { text: { type: "email", autocomplete: "email" } },
+  },
+  ...PASSWORD_FIELDS,
+];
+
+const USERNAME_SCHEMA: HaFormSchema[] = [
+  {
+    name: "username",
+    required: true,
+    selector: { text: { type: "text", autocomplete: "username" } },
+  },
+  ...PASSWORD_FIELDS,
+];
+
 @customElement("onboarding-create-user")
 class OnboardingCreateUser extends LitElement {
   @property({ attribute: false }) public localize!: LocalizeFunc;
 
   @property() public language!: string;
+
+  @state() private _useEmail = true;
 
   @state() private _loading = false;
 
@@ -63,10 +79,14 @@ class OnboardingCreateUser extends LitElement {
 
   @query("ha-form", true) private _form?: HaForm;
 
+  private get _identityFilled(): boolean {
+    return this._useEmail ? !!this._newUser.email : !!this._newUser.username;
+  }
+
   protected render(): TemplateResult {
     return html`
       <h1 class="ga-header">Benutzerkonto erstellen</h1>
-      <p>Erstelle ein Benutzerkonto, um deinen iHost zu verwalten.</p>
+      <p>Erstelle ein Benutzerkonto, um deinen KI-Butler zu verwalten.</p>
 
       ${this._errorMsg
         ? html`<ha-alert alert-type="error">${this._errorMsg}</ha-alert>`
@@ -78,14 +98,19 @@ class OnboardingCreateUser extends LitElement {
         .data=${this._newUser}
         .disabled=${this._loading}
         .error=${this._formError}
-        .schema=${CREATE_USER_SCHEMA}
+        .schema=${this._useEmail ? EMAIL_SCHEMA : USERNAME_SCHEMA}
         @value-changed=${this._handleValueChanged}
       ></ha-form>
+      <a class="toggle-link" @click=${this._toggleMode}>
+        ${this._useEmail
+          ? "Ich habe keine E-Mail-Adresse"
+          : "E-Mail-Adresse verwenden"}
+      </a>
       <div class="footer">
         <ha-button
           @click=${this._submitForm}
           .disabled=${this._loading ||
-          !this._newUser.email ||
+          !this._identityFilled ||
           !this._newUser.password ||
           !this._newUser.password_confirm ||
           this._newUser.password !== this._newUser.password_confirm}
@@ -102,7 +127,7 @@ class OnboardingCreateUser extends LitElement {
     this.addEventListener("keypress", (ev) => {
       if (
         ev.key === "Enter" &&
-        this._newUser.email &&
+        this._identityFilled &&
         this._newUser.password &&
         this._newUser.password_confirm &&
         this._newUser.password === this._newUser.password_confirm
@@ -110,6 +135,13 @@ class OnboardingCreateUser extends LitElement {
         this._submitForm(ev);
       }
     });
+  }
+
+  private _toggleMode(): void {
+    this._useEmail = !this._useEmail;
+    this._newUser = {};
+    this._formError = {};
+    this._errorMsg = "";
   }
 
   private _computeLabel(_localize) {
@@ -162,14 +194,24 @@ class OnboardingCreateUser extends LitElement {
 
     try {
       const clientId = genClientId();
-      const email = String(this._newUser.email);
-      // Use the part before @ as display name, email as username
-      const displayName = email.split("@")[0];
+
+      let name: string;
+      let username: string;
+
+      if (this._useEmail) {
+        const email = String(this._newUser.email);
+        name = email.split("@")[0];
+        username = email;
+      } else {
+        const user = String(this._newUser.username);
+        name = user;
+        username = user;
+      }
 
       const result = await onboardUserStep({
         client_id: clientId,
-        name: displayName,
-        username: email,
+        name,
+        username,
         password: String(this._newUser.password),
         language: this.language,
       });
@@ -187,7 +229,22 @@ class OnboardingCreateUser extends LitElement {
   }
 
   static get styles(): CSSResultGroup {
-    return [onBoardingStyles, gaBrandingStyles];
+    return [
+      onBoardingStyles,
+      gaBrandingStyles,
+      css`
+        .toggle-link {
+          display: inline-block;
+          margin-top: 8px;
+          color: var(--primary-color);
+          cursor: pointer;
+          font-size: 14px;
+        }
+        .toggle-link:hover {
+          text-decoration: underline;
+        }
+      `,
+    ];
   }
 }
 

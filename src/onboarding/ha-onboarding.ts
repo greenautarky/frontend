@@ -466,6 +466,9 @@ class HaOnboarding extends litLocalizeLiteMixin(HassElement) {
   }
 
   static styles = css`
+    :host {
+      --primary-color: #2b5a2a;
+    }
     .card-content {
       padding: 32px;
     }

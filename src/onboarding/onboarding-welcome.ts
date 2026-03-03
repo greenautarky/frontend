@@ -8,6 +8,7 @@ import { fireEvent } from "../common/dom/fire_event";
 import "../components/ha-button";
 import {
   gaLogoSvg,
+  haLogoSvg,
   gaBrandingStyles,
   GA_WELCOME_HEADER,
   GA_WELCOME_INTRO,
@@ -21,12 +22,20 @@ class OnboardingWelcome extends LitElement {
 
   protected render(): TemplateResult {
     return html`
-      ${gaLogoSvg}
+      <div class="brand-block">
+        <div class="brand-logos">
+          ${gaLogoSvg} ${haLogoSvg}
+        </div>
+        <p class="brand-tagline">
+          <strong>greenautarky KI-Butler</strong> powered by Home Assistant
+        </p>
+      </div>
+
       <h1 class="ga-header">${GA_WELCOME_HEADER}</h1>
       <p>${GA_WELCOME_INTRO}</p>
 
       <ha-button @click=${this._start} class="start" unelevated>
-        Mein iHost einrichten
+        Mein KI-Butler einrichten
       </ha-button>
     `;
   }

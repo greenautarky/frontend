@@ -31,8 +31,8 @@ class OnboardingAnalytics extends LitElement {
   };
 
   @state() private _gaPrefs: GATelemetryPreferences = {
-    error_logs: false,
-    metrics: false,
+    error_logs: true,
+    metrics: true,
   };
 
   protected render(): TemplateResult {
