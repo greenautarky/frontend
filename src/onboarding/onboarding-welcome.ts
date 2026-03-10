@@ -6,13 +6,10 @@ import type { HomeAssistant } from "../types";
 import { onBoardingStyles } from "./styles";
 import { fireEvent } from "../common/dom/fire_event";
 import "../components/ha-button";
-import {
-  gaLogoSvg,
-  haLogoSvg,
-  gaBrandingStyles,
-  GA_WELCOME_HEADER,
-  GA_WELCOME_INTRO,
-} from "./ga-branding";
+import "../components/ha-divider";
+import "../components/ha-md-list";
+import "../components/ha-md-list-item";
+import "../components/ha-icon-button-next";
 
 @customElement("onboarding-welcome")
 class OnboardingWelcome extends LitElement {
@@ -22,21 +19,39 @@ class OnboardingWelcome extends LitElement {
 
   protected render(): TemplateResult {
     return html`
-      <div class="brand-block">
-        <div class="brand-logos">
-          ${gaLogoSvg} ${haLogoSvg}
-        </div>
-        <p class="brand-tagline">
-          <strong>greenautarky KI-Butler</strong> powered by Home Assistant
-        </p>
-      </div>
+      <h1>${this.localize("ui.panel.page-onboarding.welcome.header")}</h1>
+      <p>${this.localize("ui.panel.page-onboarding.intro")}</p>
 
-      <h1 class="ga-header">${GA_WELCOME_HEADER}</h1>
-      <p>${GA_WELCOME_INTRO}</p>
-
-      <ha-button @click=${this._start} class="start" unelevated>
-        Mein KI-Butler einrichten
+      <ha-button @click=${this._start} class="start">
+        ${this.localize("ui.panel.page-onboarding.welcome.start")}
       </ha-button>
+
+      <ha-divider
+        .label=${this.localize("ui.panel.page-onboarding.welcome.or_restore")}
+      ></ha-divider>
+
+      <ha-md-list>
+        <ha-md-list-item type="button" @click=${this._restoreBackupUpload}>
+          <div slot="headline">
+            ${this.localize("ui.panel.page-onboarding.restore.upload_backup")}
+          </div>
+          <div slot="supporting-text">
+            ${this.localize(
+              "ui.panel.page-onboarding.restore.options.upload_description"
+            )}
+          </div>
+          <ha-icon-button-next slot="end"></ha-icon-button-next>
+        </ha-md-list-item>
+        <ha-md-list-item type="button" @click=${this._restoreBackupCloud}>
+          <div slot="headline">Home Assistant Cloud</div>
+          <div slot="supporting-text">
+            ${this.localize(
+              "ui.panel.page-onboarding.restore.ha-cloud.description"
+            )}
+          </div>
+          <ha-icon-button-next slot="end"></ha-icon-button-next>
+        </ha-md-list-item>
+      </ha-md-list>
     `;
   }
 
@@ -46,15 +61,29 @@ class OnboardingWelcome extends LitElement {
     });
   }
 
+  private _restoreBackupUpload(): void {
+    fireEvent(this, "onboarding-step", {
+      type: "init",
+      result: { restore: "upload" },
+    });
+  }
+
+  private _restoreBackupCloud(): void {
+    fireEvent(this, "onboarding-step", {
+      type: "init",
+      result: { restore: "cloud" },
+    });
+  }
+
   static get styles(): CSSResultGroup {
     return [
       onBoardingStyles,
-      gaBrandingStyles,
       css`
         :host {
           display: flex;
           flex-direction: column;
           align-items: flex-start;
+          margin-bottom: -16px;
         }
         h1 {
           margin-top: 16px;
@@ -66,6 +95,17 @@ class OnboardingWelcome extends LitElement {
         .start {
           margin: 32px 0;
           width: 100%;
+        }
+        ha-divider {
+          --ha-divider-width: calc(100% + 64px);
+          margin-left: -32px;
+          margin-right: -32px;
+        }
+        ha-md-list {
+          width: 100%;
+          padding-bottom: 0;
+          --md-list-item-leading-space: 0;
+          --md-list-item-trailing-space: 0;
         }
       `,
     ];

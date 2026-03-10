@@ -234,6 +234,7 @@ module.exports.config = {
         app: "./src/entrypoints/app.ts",
         authorize: "./src/entrypoints/authorize.ts",
         onboarding: "./src/entrypoints/onboarding.ts",
+        "greenautarky-setup": "./src/entrypoints/greenautarky-setup.ts",
         core: "./src/entrypoints/core.ts",
         "custom-panel": "./src/entrypoints/custom-panel.ts",
       },

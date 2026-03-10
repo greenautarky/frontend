@@ -23,14 +23,10 @@ export interface OnboardingIntegrationStepResponse {
 
 export interface OnboardingAnalyticsStepResponse {}
 
-export interface OnboardingGdprStepResponse {}
-
-export interface OnboardingCustomPagesStepResponse {}
-
 export interface OnboardingResponses {
-  gdpr: OnboardingGdprStepResponse;
   user: OnboardingUserStepResponse;
-  custom_pages: OnboardingCustomPagesStepResponse;
+  core_config: OnboardingCoreConfigStepResponse;
+  integration: OnboardingIntegrationStepResponse;
   analytics: OnboardingAnalyticsStepResponse;
 }
 
@@ -71,25 +67,10 @@ export const onboardUserStep = (params: {
     })
   );
 
-export const onboardGdprStep = (params: { accepted: boolean }) =>
-  handleFetchPromise<OnboardingGdprStepResponse>(
-    fetch(`${__HASS_URL__}/api/onboarding/gdpr`, {
-      method: "POST",
-      credentials: "same-origin",
-      body: JSON.stringify(params),
-    })
-  );
-
 export const onboardCoreConfigStep = (hass: HomeAssistant) =>
   hass.callApi<OnboardingCoreConfigStepResponse>(
     "POST",
     "onboarding/core_config"
-  );
-
-export const onboardCustomPagesStep = (hass: HomeAssistant) =>
-  hass.callApi<OnboardingCustomPagesStepResponse>(
-    "POST",
-    "onboarding/custom_pages"
   );
 
 export const onboardAnalyticsStep = (hass: HomeAssistant) =>

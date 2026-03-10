@@ -553,6 +553,75 @@ this.hass.localize("ui.panel.config.automation.delete_confirm", {
 - **Future extensibility**: Design APIs that can be extended later
 - **Validation**: Validate configuration before applying changes
 
+## GreenAutarky custom onboarding
+
+### Two-phase architecture
+
+The GA KI-Butler product uses a two-phase onboarding:
+
+1. **Phase 1 — Stock HA onboarding** runs automatically during provisioning (creates the admin account). Stock onboarding files are **never modified**.
+2. **Phase 2 — Custom GA onboarding** at `/greenautarky-setup` where the end user creates their own (non-admin) account, accepts GDPR, views info pages, and configures analytics. After completion, the user is redirected to the normal login page.
+
+### Frontend panel files
+
+All custom onboarding UI lives in `src/panels/greenautarky-setup/`:
+
+| File | Purpose |
+|------|---------|
+| `ha-panel-greenautarky-setup.ts` | Main orchestrator (steps: welcome, gdpr, user, info_pages, analytics) |
+| `ga-setup-welcome.ts` | Welcome screen with GA/HA branding |
+| `ga-setup-gdpr.ts` | GDPR consent step |
+| `ga-setup-create-user.ts` | User creation with email/username toggle + password strength |
+| `ga-setup-info-pages.ts` | Product info pages |
+| `ga-setup-analytics.ts` | HA analytics + GA telemetry toggles |
+| `password-strength.ts` | Extracted testable password scoring module |
+
+Supporting files:
+- `src/data/greenautarky_setup.ts` — API calls to backend (`/api/greenautarky_onboarding/*`)
+- `src/data/greenautarky_telemetry.ts` — Telemetry WebSocket API calls
+- `src/onboarding/ga-branding.ts` — Shared logos, colors, text constants
+- `src/entrypoints/greenautarky-setup.ts` — Webpack entrypoint
+- `src/html/greenautarky-setup.html.template` — HTML shell
+- `build-scripts/bundle.cjs` — Has `greenautarky-setup` entry added
+
+### Backend component
+
+Located in `homeassisant_core/homeassistant/components/greenautarky_onboarding/`. Key files:
+
+| File | Purpose |
+|------|---------|
+| `__init__.py` | Component setup, panel registration |
+| `http.py` | HTTP views: status, gdpr, create_user, complete, page |
+| `const.py` | Domain, steps, consent types, storage keys |
+| `consent.py` | Consent version tracking, repair issues |
+| `repairs.py` | Repair flow for outdated consents |
+
+### Version pinning and build pipeline
+
+The frontend version is declared in **five locations** that must stay in sync:
+
+| Location | File | Example |
+|----------|------|---------|
+| Frontend | `pyproject.toml` → `version` | `20251105.1` |
+| Core | `homeassistant/components/frontend/manifest.json` → `requirements` | `home-assistant-frontend==20251105.1` |
+| Core | `homeassistant/package_constraints.txt` | `home-assistant-frontend==20251105.1` |
+
+**Versioning scheme:** Keep the upstream date prefix (`YYYYMMDD`), bump the patch number (`.N`) for each GA change. Example: upstream `20251105.0` → first GA change `20251105.1` → next `20251105.2`. When rebasing onto a new upstream release (say `20260401.0`), start from `.0` again.
+
+**Important:** The CI workflow (`build-ga-core.yml` in the core repo) builds the frontend **from source** (not from PyPI), so the version pin is effectively bypassed during CI builds. The numbers just need to match across all five files.
+
+### CI build flow
+
+1. Push to `ga/custom-onboarding` branch triggers `build-ga-core.yml`
+2. CI clones the frontend repo and builds from source
+3. The built frontend is packaged into the core Docker image
+4. The image is used by GA OS (Home Assistant Operating System)
+
+### Tests
+
+- **Frontend**: `npx vitest run` — tests in `test/panels/greenautarky-setup/` and `test/data/`
+- **Backend**: `venv/bin/python -m pytest tests/components/greenautarky_onboarding/` from the core repo
+
 ## Review Guidelines
 
 ### Core Requirements Checklist

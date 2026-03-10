@@ -1,17 +1,17 @@
 import type { CSSResultGroup, TemplateResult } from "lit";
 import { LitElement, css, html } from "lit";
 import { customElement, property, state } from "lit/decorators";
-import { fireEvent } from "../common/dom/fire_event";
-import type { LocalizeFunc } from "../common/translations/localize";
-import "../components/ha-button";
-import "../components/ha-checkbox";
-import "../components/ha-formfield";
-import { onboardGdprStep } from "../data/onboarding";
-import { onBoardingStyles } from "./styles";
-import { gaBrandingStyles, GA_PRODUCT_NAME } from "./ga-branding";
+import { fireEvent } from "../../common/dom/fire_event";
+import type { LocalizeFunc } from "../../common/translations/localize";
+import "../../components/ha-button";
+import "../../components/ha-checkbox";
+import "../../components/ha-formfield";
+import { acceptGASetupGDPR } from "../../data/greenautarky_setup";
+import { onBoardingStyles } from "../../onboarding/styles";
+import { gaBrandingStyles, GA_PRODUCT_NAME } from "../../onboarding/ga-branding";
 
-@customElement("onboarding-gdpr")
-class OnboardingGdpr extends LitElement {
+@customElement("ga-setup-gdpr")
+class GaSetupGdpr extends LitElement {
   @property({ attribute: false }) public localize!: LocalizeFunc;
 
   @state() private _accepted = false;
@@ -75,12 +75,12 @@ class OnboardingGdpr extends LitElement {
       return;
     }
     try {
-      await onboardGdprStep({ accepted: true });
-      fireEvent(this, "onboarding-step", {
+      await acceptGASetupGDPR();
+      fireEvent(this, "ga-setup-step", {
         type: "gdpr",
       });
     } catch (err: any) {
-      this._error = `Failed to save: ${err.message}`;
+      this._error = `Fehler: ${err.message}`;
     }
   }
 
@@ -118,10 +118,6 @@ class OnboardingGdpr extends LitElement {
           display: block;
           margin-bottom: 16px;
         }
-        .error {
-          color: var(--error-color);
-          margin-bottom: 16px;
-        }
         .footer {
           text-align: right;
         }
@@ -132,6 +128,6 @@ class OnboardingGdpr extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "onboarding-gdpr": OnboardingGdpr;
+    "ga-setup-gdpr": GaSetupGdpr;
   }
 }
