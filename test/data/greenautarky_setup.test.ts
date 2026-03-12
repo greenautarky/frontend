@@ -13,7 +13,19 @@ const BACKEND_ENDPOINTS = {
     method: "POST",
     url: "/api/greenautarky_onboarding/create_user",
   },
+  telemetry: {
+    method: "POST",
+    url: "/api/greenautarky_onboarding/telemetry",
+  },
   complete: { method: "POST", url: "/api/greenautarky_onboarding/complete" },
+  consentStatus: {
+    method: "GET",
+    url: "/api/greenautarky_onboarding/consent/status",
+  },
+  consentAccept: {
+    method: "POST",
+    url: "/api/greenautarky_onboarding/consent/accept",
+  },
 };
 
 describe("greenautarky setup API contract", () => {
@@ -30,7 +42,18 @@ describe("greenautarky setup API contract", () => {
   it("mutation endpoints are POST", () => {
     expect(BACKEND_ENDPOINTS.gdpr.method).toBe("POST");
     expect(BACKEND_ENDPOINTS.createUser.method).toBe("POST");
+    expect(BACKEND_ENDPOINTS.telemetry.method).toBe("POST");
     expect(BACKEND_ENDPOINTS.complete.method).toBe("POST");
+    expect(BACKEND_ENDPOINTS.consentAccept.method).toBe("POST");
+  });
+
+  it("consent status endpoint is GET", () => {
+    expect(BACKEND_ENDPOINTS.consentStatus.method).toBe("GET");
+  });
+
+  it("consent endpoints use the consent sub-path", () => {
+    expect(BACKEND_ENDPOINTS.consentStatus.url).toContain("/consent/");
+    expect(BACKEND_ENDPOINTS.consentAccept.url).toContain("/consent/");
   });
 });
 

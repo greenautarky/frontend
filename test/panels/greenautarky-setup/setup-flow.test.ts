@@ -1,4 +1,6 @@
 import { describe, it, expect } from "vitest";
+import * as fs from "fs";
+import * as path from "path";
 
 /**
  * Tests for the greenautarky setup flow step ordering and logic.
@@ -99,5 +101,30 @@ describe("GA setup step requirements", () => {
     const analyticsIndex = STEPS.indexOf("analytics");
     const userIndex = STEPS.indexOf("user");
     expect(analyticsIndex).toBeGreaterThan(userIndex);
+  });
+});
+
+describe("GA setup source verification", () => {
+  const PANEL_DIR = path.resolve(
+    __dirname,
+    "../../../src/panels/greenautarky-setup"
+  );
+
+  it("analytics step calls both HA analytics and GA telemetry", () => {
+    const source = fs.readFileSync(
+      path.join(PANEL_DIR, "ga-setup-analytics.ts"),
+      "utf-8"
+    );
+    expect(source).toContain("setAnalyticsPreferences");
+    expect(source).toContain("setGATelemetryPreferences");
+  });
+
+  it("GDPR step requires acceptance before continue", () => {
+    const source = fs.readFileSync(
+      path.join(PANEL_DIR, "ga-setup-gdpr.ts"),
+      "utf-8"
+    );
+    // The _continue method must guard on _accepted
+    expect(source).toContain("if (!this._accepted)");
   });
 });

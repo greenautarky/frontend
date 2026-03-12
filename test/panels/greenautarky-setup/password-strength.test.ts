@@ -54,6 +54,22 @@ describe("computePasswordStrength", () => {
     const result = computePasswordStrength("Abcdefghijkl1!");
     expect(result.score).toBe(4);
   });
+
+  it("7 chars (below minimum) scores 0 even with all criteria", () => {
+    const result = computePasswordStrength("Abc1!ef");
+    expect(result.score).toBe(0);
+    expect(result.label).toBe("Zu schwach");
+  });
+
+  it("11 chars does not get length bonus", () => {
+    const result = computePasswordStrength("abcdefghijk");
+    expect(result.score).toBe(1);
+  });
+
+  it("password with spaces counts toward length", () => {
+    const result = computePasswordStrength("Pass wor1!");
+    expect(result.score).toBeGreaterThanOrEqual(3);
+  });
 });
 
 describe("MIN_PASSWORD_LENGTH", () => {
