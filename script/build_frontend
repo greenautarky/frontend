@@ -7,3 +7,20 @@ set -e
 cd "$(dirname "$0")/.."
 
 ./node_modules/.bin/gulp build-app
+
+# Verify all expected HTML pages were generated
+EXPECTED_PAGES="authorize.html index.html onboarding.html greenautarky-setup.html"
+MISSING=0
+for page in $EXPECTED_PAGES; do
+  if [ ! -f "hass_frontend/$page" ]; then
+    echo "ERROR: hass_frontend/$page was not generated!" >&2
+    MISSING=$((MISSING + 1))
+  else
+    echo "  OK: hass_frontend/$page"
+  fi
+done
+if [ "$MISSING" -gt 0 ]; then
+  echo "ERROR: $MISSING expected page(s) missing from hass_frontend/" >&2
+  exit 1
+fi
+echo "All expected frontend pages verified."
