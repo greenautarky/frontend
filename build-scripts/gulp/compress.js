@@ -31,7 +31,7 @@ const compressOther = (rootDir, modernDir, compress) =>
         `${rootDir}/**/${filesGlob}`,
         `!${modernDir}/**/${filesGlob}`,
         `!${rootDir}/{sw-modern,service_worker}.js`,
-        `${rootDir}/{authorize,onboarding}.html`,
+        `${rootDir}/{authorize,onboarding,greenautarky-setup}.html`,
       ],
       { base: rootDir, allowEmpty: true }
     )

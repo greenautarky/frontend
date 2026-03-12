@@ -32,6 +32,7 @@ declare global {
   var __DEMO__: boolean;
   var __BUILD__: "modern" | "legacy";
   var __VERSION__: string;
+  var __GIT_HASH__: string;
   var __STATIC_PATH__: string;
   var __BACKWARDS_COMPAT__: boolean;
   var __SUPERVISOR__: boolean;

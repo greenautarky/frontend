@@ -37,6 +37,7 @@ module.exports.definedVars = ({ isProdBuild, latestBuild, defineOverlay }) => ({
   __DEV__: !isProdBuild,
   __BUILD__: JSON.stringify(latestBuild ? "modern" : "legacy"),
   __VERSION__: JSON.stringify(env.version()),
+  __GIT_HASH__: JSON.stringify(env.gitHash()),
   __DEMO__: false,
   __SUPERVISOR__: false,
   __BACKWARDS_COMPAT__: false,

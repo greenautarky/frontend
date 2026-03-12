@@ -164,6 +164,7 @@ const genPagesProdTask =
 const APP_PAGE_ENTRIES = {
   "authorize.html": ["authorize"],
   "onboarding.html": ["onboarding"],
+  "greenautarky-setup.html": ["greenautarky-setup"],
   "index.html": ["core", "app"],
 };
 

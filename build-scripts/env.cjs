@@ -1,3 +1,4 @@
+const { execSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 const paths = require("./paths.cjs");
@@ -30,5 +31,12 @@ module.exports = {
   },
   isDevContainer() {
     return isTrue(process.env.DEV_CONTAINER);
+  },
+  gitHash() {
+    try {
+      return execSync("git rev-parse --short HEAD", { encoding: "utf-8" }).trim();
+    } catch {
+      return "unknown";
+    }
   },
 };

@@ -85,6 +85,7 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
           @value-changed=${this._languageChanged}
           inline-arrow
         ></ha-language-picker>
+        <span class="build-id">${__VERSION__}-${__GIT_HASH__}</span>
       </div>
     `;
   }
@@ -259,6 +260,12 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
       display: flex;
       justify-content: space-between;
       align-items: center;
+    }
+    .build-id {
+      font-size: 11px;
+      color: var(--secondary-text-color, #999);
+      opacity: 0.6;
+      user-select: all;
     }
     ha-language-picker {
       display: block;
