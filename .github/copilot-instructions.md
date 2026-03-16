@@ -560,51 +560,63 @@ this.hass.localize("ui.panel.config.automation.delete_confirm", {
 The GA KI-Butler product uses a two-phase onboarding:
 
 1. **Phase 1 — Stock HA onboarding** runs automatically during provisioning (creates the admin account). Stock onboarding files are **never modified**.
-2. **Phase 2 — Custom GA onboarding** at `/greenautarky-setup` where the end user creates their own (non-admin) account, accepts GDPR, views info pages, and configures analytics. After completion, the user is redirected to the normal login page.
+2. **Phase 2 — Custom GA onboarding** at `/greenautarky-setup.html` (built Lit panel, served like stock `onboarding.html`). The end user creates their own (non-admin) account, accepts GDPR, views info pages, and configures analytics. After completion, the user is redirected to the normal login page.
+
+### How the frontend is served
+
+The GA onboarding page follows the same pattern as stock `onboarding.html`:
+
+- **Build**: `greenautarky-setup.html.template` is rendered by the build pipeline (entry-html.js `APP_PAGE_ENTRIES`)
+- **Serve**: The built `greenautarky-setup.html` is registered as a static path in `frontend/__init__.py`
+- **Redirect**: `frontend/__init__.py` redirects to `/greenautarky-setup.html` when GA onboarding is not completed
+- **Sidebar panel**: A thin iframe wrapper in `panel/dist/entrypoint.js` loads `/greenautarky-setup.html` for mobile app users
 
 ### Frontend panel files
 
 All custom onboarding UI lives in `src/panels/greenautarky-setup/`:
 
-| File | Purpose |
-|------|---------|
+| File                             | Purpose                                                               |
+| -------------------------------- | --------------------------------------------------------------------- |
 | `ha-panel-greenautarky-setup.ts` | Main orchestrator (steps: welcome, gdpr, user, info_pages, analytics) |
-| `ga-setup-welcome.ts` | Welcome screen with GA/HA branding |
-| `ga-setup-gdpr.ts` | GDPR consent step |
-| `ga-setup-create-user.ts` | User creation with email/username toggle + password strength |
-| `ga-setup-info-pages.ts` | Product info pages |
-| `ga-setup-analytics.ts` | HA analytics + GA telemetry toggles |
-| `password-strength.ts` | Extracted testable password scoring module |
+| `ga-setup-welcome.ts`            | Welcome screen with GA/HA branding                                    |
+| `ga-setup-gdpr.ts`               | GDPR consent step                                                     |
+| `ga-setup-create-user.ts`        | User creation with email/username toggle + password strength          |
+| `ga-setup-info-pages.ts`         | Product info pages                                                    |
+| `ga-setup-analytics.ts`          | HA analytics + GA telemetry toggles                                   |
+| `password-strength.ts`           | Extracted testable password scoring module                            |
 
 Supporting files:
+
 - `src/data/greenautarky_setup.ts` — API calls to backend (`/api/greenautarky_onboarding/*`)
 - `src/data/greenautarky_telemetry.ts` — Telemetry WebSocket API calls
 - `src/onboarding/ga-branding.ts` — Shared logos, colors, text constants
 - `src/entrypoints/greenautarky-setup.ts` — Webpack entrypoint
-- `src/html/greenautarky-setup.html.template` — HTML shell
-- `build-scripts/bundle.cjs` — Has `greenautarky-setup` entry added
+- `src/html/greenautarky-setup.html.template` — HTML shell (rendered by build pipeline)
+- `build-scripts/bundle.cjs` — Has `greenautarky-setup` entry + `__GIT_HASH__` define
+- `build-scripts/gulp/entry-html.js` — `APP_PAGE_ENTRIES` includes `greenautarky-setup.html`
+- `build-scripts/gulp/compress.js` — Compression includes `greenautarky-setup.html`
 
 ### Backend component
 
 Located in `homeassisant_core/homeassistant/components/greenautarky_onboarding/`. Key files:
 
-| File | Purpose |
-|------|---------|
-| `__init__.py` | Component setup, panel registration |
-| `http.py` | HTTP views: status, gdpr, create_user, complete, page |
-| `const.py` | Domain, steps, consent types, storage keys |
-| `consent.py` | Consent version tracking, repair issues |
-| `repairs.py` | Repair flow for outdated consents |
+| File          | Purpose                                                                                  |
+| ------------- | ---------------------------------------------------------------------------------------- |
+| `__init__.py` | Component setup, panel registration                                                      |
+| `http.py`     | HTTP views: status, gdpr, create_user, telemetry, complete (redirects to built frontend) |
+| `const.py`    | Domain, steps, consent types, storage keys                                               |
+| `consent.py`  | Consent version tracking, repair issues                                                  |
+| `repairs.py`  | Repair flow for outdated consents                                                        |
 
 ### Version pinning and build pipeline
 
 The frontend version is declared in **five locations** that must stay in sync:
 
-| Location | File | Example |
-|----------|------|---------|
-| Frontend | `pyproject.toml` → `version` | `20251105.1` |
-| Core | `homeassistant/components/frontend/manifest.json` → `requirements` | `home-assistant-frontend==20251105.1` |
-| Core | `homeassistant/package_constraints.txt` | `home-assistant-frontend==20251105.1` |
+| Location | File                                                               | Example                               |
+| -------- | ------------------------------------------------------------------ | ------------------------------------- |
+| Frontend | `pyproject.toml` → `version`                                       | `20251105.1`                          |
+| Core     | `homeassistant/components/frontend/manifest.json` → `requirements` | `home-assistant-frontend==20251105.1` |
+| Core     | `homeassistant/package_constraints.txt`                            | `home-assistant-frontend==20251105.1` |
 
 **Versioning scheme:** Keep the upstream date prefix (`YYYYMMDD`), bump the patch number (`.N`) for each GA change. Example: upstream `20251105.0` → first GA change `20251105.1` → next `20251105.2`. When rebasing onto a new upstream release (say `20260401.0`), start from `.0` again.
 
@@ -612,15 +624,66 @@ The frontend version is declared in **five locations** that must stay in sync:
 
 ### CI build flow
 
-1. Push to `ga/custom-onboarding` branch triggers `build-ga-core.yml`
-2. CI clones the frontend repo and builds from source
-3. The built frontend is packaged into the core Docker image
-4. The image is used by GA OS (Home Assistant Operating System)
+Push to `ga/custom-onboarding` triggers `build-ga-core.yml` in the core repo. The pipeline has four sequential gates — nothing is pushed to GHCR until all pass:
+
+```
+test (pytest unit) → build (ARM image + wheel) → test-e2e (Playwright) → promote (:latest)
+```
+
+1. **test**: pytest unit + consistency + view tests for GA components
+2. **build**: builds frontend from source, packages into wheel, builds ARM Docker image (`:ci-{sha}`), verifies wheel and image contents
+3. **test-e2e**: installs HA from PyPI with the built wheel on amd64, runs Playwright e2e tests against the full 5-step onboarding flow
+4. **promote**: re-tags `:ci-{sha}` → `:latest`, `:landingpage`, etc.
 
 ### Tests
 
-- **Frontend**: `npx vitest run` — tests in `test/panels/greenautarky-setup/` and `test/data/`
-- **Backend**: `venv/bin/python -m pytest tests/components/greenautarky_onboarding/` from the core repo
+**Frontend (Vitest — run on every commit):**
+
+```bash
+npx vitest run   # unit + consistency tests in test/panels/greenautarky-setup/
+```
+
+**Backend (pytest — run in CI `test` job):**
+
+```bash
+venv/bin/python -m pytest tests/components/greenautarky_onboarding/ -v
+```
+
+**E2E integration (Playwright — run in CI `test-e2e` job):**
+
+```bash
+# Requires a running HA instance with Phase 1 complete
+npx playwright test --config tests/e2e/playwright.config.ts
+```
+
+Tests live in `tests/e2e/ga_onboarding.spec.ts` in the core repo.
+Environment variables: `HA_BASE_URL`, `HA_USERNAME`, `HA_PASSWORD`.
+
+**Device verification (ga-flasher stage 90):**
+
+```bash
+# Run from inside the ga-flasher runner container
+/work/ha-onboarding/ga-onboarding.py <device_ip> --admin-username admin --admin-password changeme
+```
+
+Resets GA onboarding state, runs the full wizard, verifies completion.
+
+### QA reset endpoint
+
+`POST /api/greenautarky_onboarding/reset` (admin auth required) resets the
+GA onboarding wizard state so it can be re-run on a provisioned device without
+reflashing. Used by both the Playwright e2e tests and the ga-flasher stage 90.
+
+```bash
+# Get admin token
+TOKEN=$(curl -sf -X POST http://device:8123/auth/token \
+  -d "grant_type=password&client_id=http://device:8123/&username=admin&password=changeme" \
+  | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
+
+# Reset
+curl -X POST http://device:8123/api/greenautarky_onboarding/reset \
+  -H "Authorization: Bearer $TOKEN"
+```
 
 ## Review Guidelines
 
