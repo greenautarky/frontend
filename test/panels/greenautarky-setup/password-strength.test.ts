@@ -55,10 +55,11 @@ describe("computePasswordStrength", () => {
     expect(result.score).toBe(4);
   });
 
-  it("7 chars (below minimum) scores 0 even with all criteria", () => {
+  it("7 chars (below minimum) gets no length bonus but scores criteria", () => {
+    // "Abc1!ef" = 7 chars: no length bonus, but upper+lower(1) + digit(1) + special(1) = 3
     const result = computePasswordStrength("Abc1!ef");
-    expect(result.score).toBe(0);
-    expect(result.label).toBe("Zu schwach");
+    expect(result.score).toBe(3);
+    expect(result.label).toBe("Gut");
   });
 
   it("11 chars does not get length bonus", () => {

@@ -110,12 +110,13 @@ describe("GA setup source verification", () => {
     "../../../src/panels/greenautarky-setup"
   );
 
-  it("analytics step calls both HA analytics and GA telemetry", () => {
+  it("analytics step calls GA telemetry", () => {
     const source = fs.readFileSync(
       path.join(PANEL_DIR, "ga-setup-analytics.ts"),
       "utf-8"
     );
-    expect(source).toContain("setAnalyticsPreferences");
+    // HA system analytics was removed (requires admin) — only GA telemetry
+    expect(source).not.toContain("setAnalyticsPreferences");
     expect(source).toContain("setGATelemetryPreferences");
   });
 

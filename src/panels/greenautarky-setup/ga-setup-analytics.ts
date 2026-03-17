@@ -1,4 +1,4 @@
-import type { CSSResultGroup, TemplateResult } from "lit";
+import type { CSSResultGroup, PropertyValues, TemplateResult } from "lit";
 import { css, html, LitElement } from "lit";
 import { customElement, property, state } from "lit/decorators";
 import { fireEvent } from "../../common/dom/fire_event";
@@ -32,7 +32,10 @@ class GaSetupAnalytics extends LitElement {
         />
         <h1>greenautarky Telemetrie</h1>
       </div>
-      <p>Hilf uns, greenautarky zu verbessern, indem du anonyme Nutzungsdaten teilst.</p>
+      <p>
+        Hilf uns, greenautarky zu verbessern, indem du anonyme Nutzungsdaten
+        teilst.
+      </p>
       <ha-settings-row>
         <span slot="heading">Fehlerberichte</span>
         <span slot="description">
@@ -47,9 +50,7 @@ class GaSetupAnalytics extends LitElement {
       </ha-settings-row>
       <ha-settings-row>
         <span slot="heading">Metriken</span>
-        <span slot="description">
-          Systemmetriken an greenautarky senden
-        </span>
+        <span slot="description"> Systemmetriken an greenautarky senden </span>
         <ha-switch
           .checked=${this._gaPrefs.metrics}
           @change=${this._gaMetricsChanged}
@@ -66,7 +67,7 @@ class GaSetupAnalytics extends LitElement {
     `;
   }
 
-  protected firstUpdated(changedProps) {
+  protected firstUpdated(changedProps: PropertyValues) {
     super.firstUpdated(changedProps);
     this.addEventListener("keypress", (ev) => {
       if (ev.key === "Enter") {
@@ -85,7 +86,7 @@ class GaSetupAnalytics extends LitElement {
     this._gaPrefs = { ...this._gaPrefs, metrics: target.checked };
   }
 
-  private async _save(ev) {
+  private async _save(ev: Event) {
     ev.preventDefault();
     // GA telemetry — best effort (non-admin users may not have WS permission yet)
     try {
