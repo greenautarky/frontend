@@ -4,7 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name         = "home-assistant-frontend"
-version      = "20260320.1"
+# Version is auto-computed by CI: YYYYMMDD.<commit-count> (UTC date of HEAD commit).
+# This placeholder must never be shipped — it is always overwritten before the wheel is built.
+version      = "0.0.0.dev0"
 license      = "Apache-2.0"
 license-files = ["LICENSE*"]
 description  = "The Home Assistant frontend"

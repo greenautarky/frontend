@@ -200,6 +200,18 @@ describe("authorize.ts app-flow integration", () => {
   });
 });
 
+describe("frontend version is CI-managed (not hardcoded)", () => {
+  it("pyproject.toml uses 0.0.0.dev0 placeholder — real version is injected by CI", () => {
+    const pyproject = fs.readFileSync(
+      path.join(ROOT, "pyproject.toml"),
+      "utf-8"
+    );
+    // The version must be the placeholder. If this fails, someone committed a
+    // hardcoded version. The real version is computed and injected by build-ga-core.yml.
+    expect(pyproject).toContain('version      = "0.0.0.dev0"');
+  });
+});
+
 describe("greenautarky-setup backend consistency (core repo)", () => {
   const coreRoot = path.resolve(ROOT, "../homeassisant_core");
   const coreExists = fs.existsSync(coreRoot);
