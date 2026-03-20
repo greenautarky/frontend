@@ -11,10 +11,7 @@ const ROOT = path.resolve(__dirname, "../../..");
 
 describe("greenautarky-setup build pipeline", () => {
   it("webpack entrypoint exists", () => {
-    const entrypoint = path.join(
-      ROOT,
-      "src/entrypoints/greenautarky-setup.ts"
-    );
+    const entrypoint = path.join(ROOT, "src/entrypoints/greenautarky-setup.ts");
     expect(fs.existsSync(entrypoint)).toBe(true);
   });
 
@@ -41,9 +38,7 @@ describe("greenautarky-setup build pipeline", () => {
       "utf-8"
     );
     expect(bundle).toContain('"greenautarky-setup"');
-    expect(bundle).toContain(
-      "./src/entrypoints/greenautarky-setup.ts"
-    );
+    expect(bundle).toContain("./src/entrypoints/greenautarky-setup.ts");
   });
 
   it("HTML page is registered in APP_PAGE_ENTRIES (entry-html.js)", () => {
@@ -72,10 +67,7 @@ describe("greenautarky-setup build pipeline", () => {
   });
 
   it("__GIT_HASH__ is declared in types.ts", () => {
-    const types = fs.readFileSync(
-      path.join(ROOT, "src/types.ts"),
-      "utf-8"
-    );
+    const types = fs.readFileSync(path.join(ROOT, "src/types.ts"), "utf-8");
     expect(types).toContain("__GIT_HASH__");
   });
 });
@@ -106,9 +98,7 @@ describe("greenautarky-setup panel requirements", () => {
       "utf-8"
     );
     // Extract STEPS array
-    const stepsMatch = panel.match(
-      /const STEPS[^=]*=\s*\[([\s\S]*?)\]/
-    );
+    const stepsMatch = panel.match(/const STEPS[^=]*=\s*\[([\s\S]*?)\]/);
     expect(stepsMatch).not.toBeNull();
     const stepsContent = stepsMatch![1];
     expect(stepsContent).toContain('"welcome"');
@@ -120,10 +110,7 @@ describe("greenautarky-setup panel requirements", () => {
 
   it("user step calls createGASetupUser (not create_tenant)", () => {
     const createUser = fs.readFileSync(
-      path.join(
-        ROOT,
-        "src/panels/greenautarky-setup/ga-setup-create-user.ts"
-      ),
+      path.join(ROOT, "src/panels/greenautarky-setup/ga-setup-create-user.ts"),
       "utf-8"
     );
     expect(createUser).toContain("createGASetupUser");
@@ -164,11 +151,52 @@ describe("greenautarky-setup panel requirements", () => {
       "password-strength.ts",
     ];
     for (const file of required) {
-      expect(
-        fs.existsSync(path.join(dir, file)),
-        `Missing: ${file}`
-      ).toBe(true);
+      expect(fs.existsSync(path.join(dir, file)), `Missing: ${file}`).toBe(
+        true
+      );
     }
+  });
+});
+
+describe("authorize.ts app-flow integration", () => {
+  it("authorize.ts entrypoint exists", () => {
+    expect(fs.existsSync(path.join(ROOT, "src/entrypoints/authorize.ts"))).toBe(
+      true
+    );
+  });
+
+  it("authorize.html.template exists and contains ha-authorize", () => {
+    const template = path.join(ROOT, "src/html/authorize.html.template");
+    expect(fs.existsSync(template)).toBe(true);
+    expect(fs.readFileSync(template, "utf-8")).toContain("<ha-authorize>");
+  });
+
+  it("authorize is registered in bundle.cjs", () => {
+    const bundle = fs.readFileSync(
+      path.join(ROOT, "build-scripts/bundle.cjs"),
+      "utf-8"
+    );
+    // Key is unquoted in the object literal: `authorize: "./src/..."`
+    expect(bundle).toContain("authorize:");
+    expect(bundle).toContain("./src/entrypoints/authorize.ts");
+  });
+
+  it("authorize.html is registered in APP_PAGE_ENTRIES (entry-html.js)", () => {
+    const entryHtml = fs.readFileSync(
+      path.join(ROOT, "build-scripts/gulp/entry-html.js"),
+      "utf-8"
+    );
+    expect(entryHtml).toContain('"authorize.html"');
+  });
+
+  it("authorize.ts contains GA onboarding pre-check (not just ha-authorize import)", () => {
+    const source = fs.readFileSync(
+      path.join(ROOT, "src/entrypoints/authorize.ts"),
+      "utf-8"
+    );
+    expect(source).toContain("greenautarky_onboarding/status");
+    expect(source).toContain("ga_auth_redirect");
+    expect(source).toContain("ga_bypass");
   });
 });
 
@@ -180,10 +208,7 @@ describe("greenautarky-setup backend consistency (core repo)", () => {
     "frontend/__init__.py registers greenautarky-setup.html as static path",
     () => {
       const init = fs.readFileSync(
-        path.join(
-          coreRoot,
-          "homeassistant/components/frontend/__init__.py"
-        ),
+        path.join(coreRoot, "homeassistant/components/frontend/__init__.py"),
         "utf-8"
       );
       expect(init).toContain("greenautarky-setup.html");

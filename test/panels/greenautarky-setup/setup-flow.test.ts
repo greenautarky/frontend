@@ -104,6 +104,105 @@ describe("GA setup step requirements", () => {
   });
 });
 
+describe("GA app-flow redirect (authorize ↔ setup)", () => {
+  const ENTRYPOINTS_DIR = path.resolve(__dirname, "../../../src/entrypoints");
+  const PANEL_DIR = path.resolve(
+    __dirname,
+    "../../../src/panels/greenautarky-setup"
+  );
+
+  // ── authorize.ts pre-check ────────────────────────────────────────────────
+
+  it("authorize.ts fetches the GA onboarding status endpoint", () => {
+    const source = fs.readFileSync(
+      path.join(ENTRYPOINTS_DIR, "authorize.ts"),
+      "utf-8"
+    );
+    expect(source).toContain("/api/greenautarky_onboarding/status");
+  });
+
+  it("authorize.ts stores the auth URL in sessionStorage before redirecting", () => {
+    const source = fs.readFileSync(
+      path.join(ENTRYPOINTS_DIR, "authorize.ts"),
+      "utf-8"
+    );
+    expect(source).toContain('sessionStorage.setItem("ga_auth_redirect"');
+  });
+
+  it("authorize.ts redirects to greenautarky-setup.html when not complete", () => {
+    const source = fs.readFileSync(
+      path.join(ENTRYPOINTS_DIR, "authorize.ts"),
+      "utf-8"
+    );
+    expect(source).toContain("greenautarky-setup.html");
+  });
+
+  it("authorize.ts skips redirect when ga_bypass=1 is present (admin escape hatch)", () => {
+    const source = fs.readFileSync(
+      path.join(ENTRYPOINTS_DIR, "authorize.ts"),
+      "utf-8"
+    );
+    expect(source).toContain("ga_bypass");
+  });
+
+  // ── Panel completion redirect ─────────────────────────────────────────────
+
+  it("panel reads ga_auth_redirect from sessionStorage on completion (app flow)", () => {
+    const source = fs.readFileSync(
+      path.join(PANEL_DIR, "ha-panel-greenautarky-setup.ts"),
+      "utf-8"
+    );
+    expect(source).toContain('sessionStorage.getItem("ga_auth_redirect")');
+  });
+
+  it("panel removes ga_auth_redirect from sessionStorage after redirect", () => {
+    const source = fs.readFileSync(
+      path.join(PANEL_DIR, "ha-panel-greenautarky-setup.ts"),
+      "utf-8"
+    );
+    expect(source).toContain('sessionStorage.removeItem("ga_auth_redirect")');
+  });
+
+  it("panel falls back to / when no ga_auth_redirect (browser flow)", () => {
+    const source = fs.readFileSync(
+      path.join(PANEL_DIR, "ha-panel-greenautarky-setup.ts"),
+      "utf-8"
+    );
+    // Both branches must exist: redirect to authRedirect AND fallback to /
+    expect(source).toContain("document.location.assign(authRedirect)");
+    expect(source).toContain('document.location.assign("/")');
+  });
+
+  // ── Admin-Login escape hatch ──────────────────────────────────────────────
+
+  it("panel renders Admin-Login link for app-flow escape hatch", () => {
+    const source = fs.readFileSync(
+      path.join(PANEL_DIR, "ha-panel-greenautarky-setup.ts"),
+      "utf-8"
+    );
+    expect(source).toContain("admin-login");
+    expect(source).toContain("Admin-Login");
+  });
+
+  it("Admin-Login link appends ga_bypass=1 to the stored auth URL", () => {
+    const source = fs.readFileSync(
+      path.join(PANEL_DIR, "ha-panel-greenautarky-setup.ts"),
+      "utf-8"
+    );
+    expect(source).toContain("ga_bypass=1");
+  });
+
+  it("panel reads _authRedirect in firstUpdated (not computed each render)", () => {
+    const source = fs.readFileSync(
+      path.join(PANEL_DIR, "ha-panel-greenautarky-setup.ts"),
+      "utf-8"
+    );
+    // _authRedirect must be a @state() property (reactive, avoids sessionStorage on every render)
+    expect(source).toContain("_authRedirect");
+    expect(source).toContain("firstUpdated");
+  });
+});
+
 describe("GA setup source verification", () => {
   const PANEL_DIR = path.resolve(
     __dirname,
