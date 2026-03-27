@@ -4,6 +4,16 @@ export interface GASetupStatus {
   completed: boolean;
   gdpr_accepted: boolean;
   steps_done: string[];
+  pin_required?: boolean;
+  pin_verified?: boolean;
+  pin_retry_after?: number;
+}
+
+export interface GAPinResponse {
+  status: "ok" | "error" | "locked";
+  message?: string;
+  retry_after?: number;
+  attempts?: number;
 }
 
 export interface GASetupUserResponse {
@@ -40,6 +50,14 @@ export const createGASetupUser = (params: {
       body: JSON.stringify(params),
     })
   );
+
+export const verifyGASetupPin = (pin: string): Promise<GAPinResponse> =>
+  fetch("/api/greenautarky_onboarding/verify_pin", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ pin: pin.replace(/-/g, "") }),
+  }).then((r) => r.json());
 
 export const completeGASetup = (): Promise<void> =>
   handleFetchPromise<void>(

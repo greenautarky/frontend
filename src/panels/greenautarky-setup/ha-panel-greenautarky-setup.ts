@@ -12,7 +12,10 @@ import type { HASSDomEvent } from "../../common/dom/fire_event";
 import { litLocalizeLiteMixin } from "../../mixins/lit-localize-lite-mixin";
 import { HassElement } from "../../state/hass-element";
 import "../../components/ha-card";
-import { completeGASetup } from "../../data/greenautarky_setup";
+import {
+  completeGASetup,
+  fetchGASetupStatus,
+} from "../../data/greenautarky_setup";
 import type { GASetupUserResponse } from "../../data/greenautarky_setup";
 import { enableWrite, saveTokens } from "../../common/auth/token_storage";
 import { hassUrl } from "../../data/auth";
@@ -21,12 +24,13 @@ import { subscribeUser } from "../../data/ws-user";
 import { storeState } from "../../util/ha-pref-storage";
 import type { HomeAssistant } from "../../types";
 import "./ga-setup-welcome";
+import "./ga-setup-pin";
 import "./ga-setup-gdpr";
 import "./ga-setup-create-user";
 import "./ga-setup-info-pages";
 import "./ga-setup-analytics";
 
-type GASetupStepType = "welcome" | "gdpr" | "user" | "info_pages" | "analytics";
+type GASetupStepType = "welcome" | "pin" | "gdpr" | "user" | "info_pages" | "analytics";
 
 interface GASetupEvent {
   type: GASetupStepType;
@@ -35,6 +39,7 @@ interface GASetupEvent {
 
 const STEPS: GASetupStepType[] = [
   "welcome",
+  "pin",
   "gdpr",
   "user",
   "info_pages",
@@ -109,6 +114,8 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
         return html`<ga-setup-welcome
           .localize=${this.localize}
         ></ga-setup-welcome>`;
+      case "pin":
+        return html`<ga-setup-pin></ga-setup-pin>`;
       case "gdpr":
         return html`<ga-setup-gdpr .localize=${this.localize}></ga-setup-gdpr>`;
       case "user":
@@ -168,6 +175,19 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
     this._progress = stepProgress;
 
     if (type === "welcome") {
+      // Check if PIN step is needed
+      try {
+        const status = await fetchGASetupStatus();
+        if (status.pin_required && !status.pin_verified) {
+          this._currentStep = "pin";
+        } else {
+          this._currentStep = "gdpr";
+        }
+      } catch (_) {
+        // If status check fails, skip PIN (backward compatible)
+        this._currentStep = "gdpr";
+      }
+    } else if (type === "pin") {
       this._currentStep = "gdpr";
     } else if (type === "gdpr") {
       this._currentStep = "user";
