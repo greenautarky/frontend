@@ -69,6 +69,12 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
 
   @state() private _progress = 0;
 
+  /** PIN from QR code URL parameter (?pin=847293) — auto-submitted in PIN step */
+  @state() private _autoPin?: string;
+
+  /** Device label from QR code URL parameter (?device=KIB-SON-00000042) */
+  @state() private _deviceLabel?: string;
+
   // Set when arriving from /auth/authorize (app flow). Used for Admin-Login link.
   @state() private _authRedirect: string | null = null;
 
@@ -115,7 +121,7 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
           .localize=${this.localize}
         ></ga-setup-welcome>`;
       case "pin":
-        return html`<ga-setup-pin></ga-setup-pin>`;
+        return html`<ga-setup-pin .autoPin=${this._autoPin}></ga-setup-pin>`;
       case "gdpr":
         return html`<ga-setup-gdpr .localize=${this.localize}></ga-setup-gdpr>`;
       case "user":
@@ -146,6 +152,25 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
     }
     this.addEventListener("ga-setup-step", (ev) => this._handleStep(ev));
     import("../../components/ha-language-picker");
+
+    // Parse PIN from QR code URL (?pin=847293&device=KIB-SON-00000042)
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const pin = params.get("pin");
+      const device = params.get("device");
+      if (pin && /^\d{6}$/.test(pin)) {
+        this._autoPin = pin;
+      }
+      if (device) {
+        this._deviceLabel = device;
+      }
+      // Clean URL (remove pin from address bar for security)
+      if (pin || device) {
+        history.replaceState(null, "", window.location.pathname);
+      }
+    } catch (_) {
+      // URL parsing not available
+    }
     // If we arrived via the app flow (authorize.ts stored the auth URL),
     // keep a reference so we can render the Admin-Login escape-hatch link.
     try {
@@ -188,6 +213,7 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
         this._currentStep = "gdpr";
       }
     } else if (type === "pin") {
+      this._autoPin = undefined;
       this._currentStep = "gdpr";
     } else if (type === "gdpr") {
       this._currentStep = "user";

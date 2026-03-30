@@ -1,6 +1,6 @@
 import type { CSSResultGroup, TemplateResult } from "lit";
 import { LitElement, css, html } from "lit";
-import { customElement, state } from "lit/decorators";
+import { customElement, property, state } from "lit/decorators";
 import { fireEvent } from "../../common/dom/fire_event";
 import "../../components/ha-button";
 import "../../components/ha-textfield";
@@ -9,7 +9,12 @@ import { verifyGASetupPin } from "../../data/greenautarky_setup";
 
 @customElement("ga-setup-pin")
 class GaSetupPin extends LitElement {
+  /** PIN to auto-submit (from QR code URL parameter) */
+  @property() autoPin?: string;
+
   @state() private _pin = "";
+
+  @state() private _autoSubmitted = false;
 
   @state() private _error = "";
 
@@ -20,6 +25,22 @@ class GaSetupPin extends LitElement {
   @state() private _countdown = 0;
 
   private _timer?: ReturnType<typeof setInterval>;
+
+  protected updated(changedProps: import("lit").PropertyValues): void {
+    super.updated(changedProps);
+    // Auto-submit PIN from QR code (only once)
+    if (
+      this.autoPin &&
+      !this._autoSubmitted &&
+      !this._loading &&
+      this.autoPin.replace(/\D/g, "").length === 6
+    ) {
+      this._autoSubmitted = true;
+      this._pin = this.autoPin.replace(/\D/g, "");
+      this.autoPin = undefined;
+      this._submit();
+    }
+  }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
