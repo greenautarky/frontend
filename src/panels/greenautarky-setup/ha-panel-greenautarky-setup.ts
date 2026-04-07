@@ -29,8 +29,9 @@ import "./ga-setup-gdpr";
 import "./ga-setup-create-user";
 import "./ga-setup-info-pages";
 import "./ga-setup-analytics";
+import "./ga-setup-ethernet";
 
-type GASetupStepType = "welcome" | "pin" | "gdpr" | "user" | "info_pages" | "analytics";
+type GASetupStepType = "welcome" | "pin" | "gdpr" | "user" | "info_pages" | "analytics" | "ethernet";
 
 interface GASetupEvent {
   type: GASetupStepType;
@@ -44,6 +45,7 @@ const STEPS: GASetupStepType[] = [
   "user",
   "info_pages",
   "analytics",
+  "ethernet",
 ];
 
 declare global {
@@ -138,6 +140,10 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
           .hass=${this.hass}
           .localize=${this.localize}
         ></ga-setup-analytics>`;
+      case "ethernet":
+        return html`<ga-setup-ethernet
+          .localize=${this.localize}
+        ></ga-setup-ethernet>`;
       default:
         return nothing;
     }
@@ -239,6 +245,8 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
     } else if (type === "info_pages") {
       this._currentStep = "analytics";
     } else if (type === "analytics") {
+      this._currentStep = "ethernet";
+    } else if (type === "ethernet") {
       // All done — mark setup complete and redirect
       this._loading = true;
       this._progress = 1;

@@ -59,6 +59,16 @@ export const verifyGASetupPin = (pin: string): Promise<GAPinResponse> =>
     body: JSON.stringify({ pin: pin.replace(/-/g, "") }),
   }).then((r) => r.json());
 
+export const setEthernetPreference = (
+  enable: boolean
+): Promise<{ status: string }> =>
+  fetch("/api/greenautarky_onboarding/ethernet", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ enable_ethernet: enable }),
+  }).then((r) => r.json());
+
 export const completeGASetup = (): Promise<void> =>
   handleFetchPromise<void>(
     fetch("/api/greenautarky_onboarding/complete", {
