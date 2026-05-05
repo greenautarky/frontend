@@ -201,6 +201,44 @@ describe("GA app-flow redirect (authorize ↔ setup)", () => {
     expect(source).toContain("_authRedirect");
     expect(source).toContain("firstUpdated");
   });
+
+  // ── Build-id click → /admin (URL-change escape hatch) ─────────────────────
+
+  it("build-id is rendered as a clickable anchor (not a plain span)", () => {
+    const source = fs.readFileSync(
+      path.join(PANEL_DIR, "ha-panel-greenautarky-setup.ts"),
+      "utf-8"
+    );
+    // Anchor with class="build-id" must exist
+    expect(source).toMatch(/<a class="build-id"[^>]*href=/);
+    // The previous plain <span class="build-id"> wrapper must be gone —
+    // otherwise clicking the version number does nothing.
+    expect(source).not.toMatch(/<span class="build-id">/);
+  });
+
+  it("build-id anchor links to /admin (server-side admin shortcut)", () => {
+    const source = fs.readFileSync(
+      path.join(PANEL_DIR, "ha-panel-greenautarky-setup.ts"),
+      "utf-8"
+    );
+    // The href must be the /admin route registered by the core integration —
+    // the server resolves origin + redirect_uri server-side so the link
+    // works even if the panel is loaded under a non-default origin.
+    expect(source).toMatch(/<a class="build-id"[^>]*href="\/admin"/);
+  });
+
+  it("build-id still embeds __VERSION__ and __GIT_HASH__", () => {
+    const source = fs.readFileSync(
+      path.join(PANEL_DIR, "ha-panel-greenautarky-setup.ts"),
+      "utf-8"
+    );
+    // The visual version-id in the wizard footer must remain present so
+    // the reader can still see which build is running (it's also the click
+    // target now). The literal ${...} chars are part of a Lit template,
+    // not a JS template literal in this test file.
+    // eslint-disable-next-line no-template-curly-in-string
+    expect(source).toContain("${__VERSION__}-${__GIT_HASH__}");
+  });
 });
 
 describe("GA setup source verification", () => {

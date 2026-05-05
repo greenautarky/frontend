@@ -31,7 +31,14 @@ import "./ga-setup-info-pages";
 import "./ga-setup-analytics";
 import "./ga-setup-ethernet";
 
-type GASetupStepType = "welcome" | "pin" | "gdpr" | "user" | "info_pages" | "analytics" | "ethernet";
+type GASetupStepType =
+  | "welcome"
+  | "pin"
+  | "gdpr"
+  | "user"
+  | "info_pages"
+  | "analytics"
+  | "ethernet";
 
 interface GASetupEvent {
   type: GASetupStepType;
@@ -104,7 +111,9 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
           @value-changed=${this._languageChanged}
           inline-arrow
         ></ha-language-picker>
-        <span class="build-id">${__VERSION__}-${__GIT_HASH__}</span>
+        <a class="build-id" href="/admin" title="Admin-Login"
+          >${__VERSION__}-${__GIT_HASH__}</a
+        >
       </div>
       ${adminLink}
     `;
