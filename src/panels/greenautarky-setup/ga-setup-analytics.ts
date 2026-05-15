@@ -17,9 +17,15 @@ class GaSetupAnalytics extends LitElement {
 
   @property({ attribute: false }) public localize!: LocalizeFunc;
 
+  // Privacy Tier defaults — see ga-ihost-docs/PRIVACY_TIERS.md.
+  // Tier 1 (Fehlerberichte / berechtigtes Interesse, Art. 6 (f) DSGVO):
+  //   default ON, operator can opt out anytime.
+  // Tier 2 (Metriken / Einwilligung, Art. 6 (a) DSGVO):
+  //   default OFF, requires explicit user consent.
+  // Tier 0 (Vertragserfüllung) is not shown — always-on at the OS layer.
   @state() private _gaPrefs: GATelemetryPreferences = {
     error_logs: true,
-    metrics: true,
+    metrics: false,
   };
 
   protected render(): TemplateResult {
@@ -37,9 +43,11 @@ class GaSetupAnalytics extends LitElement {
         teilst.
       </p>
       <ha-settings-row>
-        <span slot="heading">Fehlerberichte</span>
+        <span slot="heading">Fehlerberichte (empfohlen)</span>
         <span slot="description">
-          Fehlerprotokolle an greenautarky senden
+          Anonyme Fehlerprotokolle helfen uns, dein Gerät am Laufen zu halten.
+          Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse).
+          Du kannst dies jederzeit deaktivieren.
         </span>
         <ha-switch
           .checked=${this._gaPrefs.error_logs}
@@ -50,7 +58,11 @@ class GaSetupAnalytics extends LitElement {
       </ha-settings-row>
       <ha-settings-row>
         <span slot="heading">Metriken</span>
-        <span slot="description"> Systemmetriken an greenautarky senden </span>
+        <span slot="description">
+          Detaillierte Leistungsdaten (CPU, RAM, Speicher) helfen uns dein Gerät
+          zu optimieren. Rechtsgrundlage: Art. 6 Abs. 1 lit. a DSGVO
+          (Einwilligung) — bitte aktiv zustimmen.
+        </span>
         <ha-switch
           .checked=${this._gaPrefs.metrics}
           @change=${this._gaMetricsChanged}
