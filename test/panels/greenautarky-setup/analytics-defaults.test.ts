@@ -54,4 +54,54 @@ describe("ga-setup-analytics privacy tier defaults", () => {
     expect(ANALYTICS_SOURCE).toMatch(/stale-consent-banner/);
     expect(ANALYTICS_SOURCE).toMatch(/getGATelemetryPreferences/);
   });
+
+  // ---------------------------------------------------------------------
+  // Phase F — redesigned consent UI with three explicit tier sections.
+  // ---------------------------------------------------------------------
+
+  it("Tier 0 has an info-only section without a toggle (Phase F)", () => {
+    // Tier 0 must appear in the markup as a labeled section, with an
+    // explicit always-on indicator and NO ha-switch nested inside it.
+    expect(ANALYTICS_SOURCE).toMatch(/class="tier tier-0"/);
+    expect(ANALYTICS_SOURCE).toMatch(/Betriebsnotwendige\s+Daten/);
+    expect(ANALYTICS_SOURCE).toMatch(/immer\s+aktiv/);
+    // Capture the tier-0 section and confirm no ha-switch in it.
+    const tier0Match = ANALYTICS_SOURCE.match(
+      /<section class="tier tier-0">([\s\S]*?)<\/section>/
+    );
+    expect(tier0Match, "tier-0 section must exist").not.toBeNull();
+    expect(tier0Match![1]).not.toContain("ha-switch");
+  });
+
+  it("Tier 0 cites Art. 6 (b) Vertragserfüllung as the legal basis (Phase F)", () => {
+    const tier0Match = ANALYTICS_SOURCE.match(
+      /<section class="tier tier-0">([\s\S]*?)<\/section>/
+    );
+    expect(tier0Match![1]).toMatch(/Art\.?\s*6.*\(?b\)?/i);
+    expect(tier0Match![1].toLowerCase()).toContain("vertragserf");
+  });
+
+  it("Each tier section has a 'Mehr erfahren' expandable detail (Phase F)", () => {
+    // Three <details> blocks — one per tier — each with example data.
+    const detailsBlocks = ANALYTICS_SOURCE.match(
+      /<details>[\s\S]*?<\/details>/g
+    );
+    expect(detailsBlocks).not.toBeNull();
+    expect(detailsBlocks!.length).toBeGreaterThanOrEqual(3);
+    for (const block of detailsBlocks!) {
+      expect(block).toContain("Mehr erfahren");
+    }
+  });
+
+  it("Tier 2 label rebranded to 'Detaillierte Leistungsdaten' (Phase F)", () => {
+    // Acceptance criterion: the Tier 2 heading is the plain-language label.
+    expect(ANALYTICS_SOURCE).toMatch(/Detaillierte\s+Leistungsdaten/);
+  });
+
+  it("Footer carries a link to the full versioned privacy policy (Phase F)", () => {
+    expect(ANALYTICS_SOURCE).toMatch(/class="policy-link"/);
+    expect(ANALYTICS_SOURCE).toMatch(
+      /href="https:\/\/greenautarky\.com\/datenschutz"/
+    );
+  });
 });
