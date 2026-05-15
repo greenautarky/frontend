@@ -46,4 +46,12 @@ describe("ga-setup-analytics privacy tier defaults", () => {
   it("Tier 1 toggle is labeled 'recommended' to encourage opt-in default", () => {
     expect(ANALYTICS_SOURCE.toLowerCase()).toContain("empfohlen");
   });
+
+  it("Stale-consent banner is wired up (Phase E)", () => {
+    // The panel must read the backend's consent_is_stale flag and surface
+    // a banner so users get re-asked after a policy bump.
+    expect(ANALYTICS_SOURCE).toMatch(/_consentIsStale/);
+    expect(ANALYTICS_SOURCE).toMatch(/stale-consent-banner/);
+    expect(ANALYTICS_SOURCE).toMatch(/getGATelemetryPreferences/);
+  });
 });

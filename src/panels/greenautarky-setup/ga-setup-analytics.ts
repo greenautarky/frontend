@@ -7,7 +7,10 @@ import "../../components/ha-button";
 import "../../components/ha-settings-row";
 import "../../components/ha-switch";
 import type { GATelemetryPreferences } from "../../data/greenautarky_telemetry";
-import { setGATelemetryPreferences } from "../../data/greenautarky_telemetry";
+import {
+  getGATelemetryPreferences,
+  setGATelemetryPreferences,
+} from "../../data/greenautarky_telemetry";
 import type { HomeAssistant } from "../../types";
 import { onBoardingStyles } from "../../onboarding/styles";
 
@@ -28,6 +31,13 @@ class GaSetupAnalytics extends LitElement {
     metrics: false,
   };
 
+  // Phase E — re-consent prompt when the OS policy version has bumped
+  // past what the user previously accepted. Computed from the backend's
+  // derived `consent_is_stale` flag (which is false for fresh devices,
+  // true only for "consent given under an older policy"). See
+  // ga-ihost-docs/PRIVACY_TIERS.md § Versioning.
+  @state() private _consentIsStale = false;
+
   protected render(): TemplateResult {
     return html`
       <div class="ga-header">
@@ -38,6 +48,15 @@ class GaSetupAnalytics extends LitElement {
         />
         <h1>greenautarky Telemetrie</h1>
       </div>
+      ${this._consentIsStale
+        ? html`
+            <div class="stale-consent-banner" role="alert">
+              <strong>Datenschutz-Hinweis aktualisiert.</strong> Bitte überprüfe
+              deine Einstellungen — die Tier-Beschreibungen oder
+              Rechtsgrundlagen wurden seit deiner letzten Zustimmung geändert.
+            </div>
+          `
+        : ""}
       <p>
         Hilf uns, greenautarky zu verbessern, indem du anonyme Nutzungsdaten
         teilst.
@@ -86,6 +105,20 @@ class GaSetupAnalytics extends LitElement {
         this._save(ev);
       }
     });
+    this._loadStaleness();
+  }
+
+  // Best-effort fetch of the current consent state to detect a stale
+  // policy_version_accepted. Errors are swallowed — the panel keeps the
+  // tier defaults if the backend isn't reachable yet (e.g. mid-onboarding
+  // before non-admin users have WS permission).
+  private async _loadStaleness(): Promise<void> {
+    try {
+      const resp = await getGATelemetryPreferences(this.hass);
+      this._consentIsStale = !!resp.consent_is_stale;
+    } catch (_err) {
+      // Non-fatal: surface no banner if we can't read state
+    }
   }
 
   private _gaErrorLogsChanged(ev: Event): void {
@@ -129,6 +162,19 @@ class GaSetupAnalytics extends LitElement {
         }
         ha-settings-row {
           padding: 0;
+        }
+        .stale-consent-banner {
+          background: var(--warning-color, #ffa726);
+          color: var(--text-primary-color, #fff);
+          padding: 12px 16px;
+          border-radius: 6px;
+          margin: 8px 0 16px;
+          font-size: 14px;
+          line-height: 1.4;
+        }
+        .stale-consent-banner strong {
+          display: block;
+          margin-bottom: 4px;
         }
       `,
     ];

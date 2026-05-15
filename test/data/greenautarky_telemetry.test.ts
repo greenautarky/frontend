@@ -53,4 +53,8 @@ describe("greenautarky telemetry API contract", () => {
     expect(TELEMETRY_SOURCE).toContain("current_policy_version");
     expect(TELEMETRY_SOURCE).toContain("tiers?");
   });
+
+  it("Full response type carries the derived consent_is_stale flag (Phase E)", () => {
+    expect(TELEMETRY_SOURCE).toMatch(/consent_is_stale\?:\s*boolean/);
+  });
 });
