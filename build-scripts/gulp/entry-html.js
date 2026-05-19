@@ -25,6 +25,14 @@ const SAFARI_TO_MACOS = {
   16: [11, 0, 0],
   17: [12, 0, 0],
   18: [13, 0, 0],
+  // Apple jumped Safari versioning to align with the unified macOS 26
+  // numbering scheme in autumn 2025. The browserslist database now
+  // ships Safari 26 as the latest minor; map it (and the gap entries
+  // 19-25 that never shipped publicly) so the modern-bundle build
+  // doesn't fail when caniuse-lite refreshes.
+  19: [14, 0, 0],
+  20: [15, 0, 0],
+  26: [26, 0, 0],
 };
 
 const getCommonTemplateVars = () => {
