@@ -43,6 +43,8 @@ type GASetupStepType =
 interface GASetupEvent {
   type: GASetupStepType;
   result?: GASetupUserResponse;
+  /** Invite PIN carried from the join-mode PIN step to create-user. */
+  pin?: string;
 }
 
 const STEPS: GASetupStepType[] = [
@@ -86,6 +88,13 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
 
   // Set when arriving from /auth/authorize (app flow). Used for Admin-Login link.
   @state() private _authRedirect: string | null = null;
+
+  /** Sub-user join mode (ADR-0006): same wizard, minimal flow pin(invite)→user.
+   * Detected from the URL (?join=1 or /greenautarky-join). */
+  @state() private _joinMode = false;
+
+  /** Invite PIN collected in the join-mode PIN step, passed to create-user. */
+  @state() private _invitePin?: string;
 
   protected render() {
     const adminLink = this._authRedirect
@@ -132,13 +141,18 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
           .localize=${this.localize}
         ></ga-setup-welcome>`;
       case "pin":
-        return html`<ga-setup-pin .autoPin=${this._autoPin}></ga-setup-pin>`;
+        return html`<ga-setup-pin
+          .autoPin=${this._autoPin}
+          .joinMode=${this._joinMode}
+        ></ga-setup-pin>`;
       case "gdpr":
         return html`<ga-setup-gdpr .localize=${this.localize}></ga-setup-gdpr>`;
       case "user":
         return html`<ga-setup-create-user
           .localize=${this.localize}
           .language=${this.language}
+          .joinMode=${this._joinMode}
+          .invitePin=${this._invitePin}
         ></ga-setup-create-user>`;
       case "info_pages":
         return html`<ga-setup-info-pages
@@ -167,6 +181,21 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
     }
     this.addEventListener("ga-setup-step", (ev) => this._handleStep(ev));
     import("../../components/ha-language-picker");
+
+    // Sub-user join mode: same wizard, minimal flow. Start straight at the
+    // invite-PIN step (no welcome/gdpr/…). Detected from ?join=1 or the path.
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (
+        params.get("join") === "1" ||
+        window.location.pathname.includes("greenautarky-join")
+      ) {
+        this._joinMode = true;
+        this._currentStep = "pin";
+      }
+    } catch (_) {
+      // URL parsing not available
+    }
 
     // Parse PIN from QR code URL (?pin=847293&device=KIB-SON-00000042)
     try {
@@ -229,7 +258,12 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
       }
     } else if (type === "pin") {
       this._autoPin = undefined;
-      this._currentStep = "gdpr";
+      if (this._joinMode) {
+        this._invitePin = ev.detail.pin;
+        this._currentStep = "user";
+      } else {
+        this._currentStep = "gdpr";
+      }
     } else if (type === "gdpr") {
       this._currentStep = "user";
     } else if (type === "user") {
@@ -244,6 +278,12 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
           saveTokens,
         });
         await this._connectHass(auth);
+        if (this._joinMode) {
+          // Sub-user joined + auto-logged-in on their own device → go straight
+          // to their dashboard (skip device-level info/analytics/ethernet).
+          document.location.assign("/");
+          return;
+        }
         this._currentStep = "info_pages";
       } catch (_err: any) {
         alert("Etwas ist schiefgelaufen. Bitte versuche es erneut.");

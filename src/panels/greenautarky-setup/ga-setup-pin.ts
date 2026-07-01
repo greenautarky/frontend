@@ -12,6 +12,10 @@ class GaSetupPin extends LitElement {
   /** PIN to auto-submit (from QR code URL parameter) */
   @property() autoPin?: string;
 
+  /** Sub-user join mode: collect a master-issued invite PIN instead of the
+   * device PIN — no server-side verify here (the join endpoint validates it). */
+  @property({ type: Boolean }) public joinMode = false;
+
   @state() private _pin = "";
 
   @state() private _autoSubmitted = false;
@@ -57,10 +61,11 @@ class GaSetupPin extends LitElement {
 
     return html`
       <div class="pin-icon">&#128274;</div>
-      <h1>Geräte-PIN eingeben</h1>
+      <h1>${this.joinMode ? "Einladungs-PIN eingeben" : "Geräte-PIN eingeben"}</h1>
       <p class="description">
-        Bitte geben Sie den 6-stelligen Code ein, der auf dem Aufkleber Ihres
-        Geräts steht.
+        ${this.joinMode
+          ? "Bitte gib den 6-stelligen Einladungs-PIN ein, den du erhalten hast."
+          : "Bitte geben Sie den 6-stelligen Code ein, der auf dem Aufkleber Ihres Geräts steht."}
       </p>
 
       <div class="pin-input-container">
@@ -132,6 +137,14 @@ class GaSetupPin extends LitElement {
 
     this._loading = true;
     this._error = "";
+
+    if (this.joinMode) {
+      // Join mode: don't verify against the device PIN — hand the invite PIN
+      // to the create-user step, which passes it to the join endpoint.
+      fireEvent(this, "ga-setup-step", { type: "pin" as any, pin });
+      this._loading = false;
+      return;
+    }
 
     try {
       const result = await verifyGASetupPin(pin);

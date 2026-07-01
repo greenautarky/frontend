@@ -51,6 +51,26 @@ export const createGASetupUser = (params: {
     })
   );
 
+export interface GASubUserJoinResponse {
+  status: string;
+  username: string;
+  auth_code?: string;
+}
+
+export const joinGASubUser = (params: {
+  client_id: string;
+  name: string;
+  password: string;
+  invite_pin: string;
+}): Promise<GASubUserJoinResponse> =>
+  handleFetchPromise<GASubUserJoinResponse>(
+    fetch("/api/greenautarky_onboarding/sub_user/join", {
+      method: "POST",
+      credentials: "same-origin",
+      body: JSON.stringify(params),
+    })
+  );
+
 export const verifyGASetupPin = (pin: string): Promise<GAPinResponse> =>
   fetch("/api/greenautarky_onboarding/verify_pin", {
     method: "POST",

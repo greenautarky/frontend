@@ -351,3 +351,89 @@ describe("user creation: mode toggle behavior", () => {
     expect(isIdentityFilled({ email: "new@test.com" }, true)).toBe(true);
   });
 });
+
+describe("sub-user join mode (ADR-0006)", () => {
+  interface JoinParams {
+    client_id: string;
+    name: string;
+    password: string;
+    invite_pin: string;
+  }
+
+  function deriveJoinParams(
+    formData: Record<string, string>,
+    invitePin: string
+  ): JoinParams {
+    return {
+      client_id: "http://localhost:8123/",
+      name: formData.name,
+      password: formData.password,
+      invite_pin: invitePin,
+    };
+  }
+
+  const joinIdentityFilled = (formData: Record<string, string>): boolean =>
+    !!formData.name;
+
+  const joinSubmitEnabled = (
+    formData: Record<string, string>,
+    strengthScore: number
+  ): boolean =>
+    joinIdentityFilled(formData) &&
+    isPasswordValid(formData.password || "", strengthScore) &&
+    !!formData.password_confirm &&
+    formData.password === formData.password_confirm;
+
+  it("builds the join request from display name + password + invite pin", () => {
+    expect(
+      deriveJoinParams(
+        { name: "Anna", password: "Test1234!", password_confirm: "Test1234!" },
+        "123456"
+      )
+    ).toEqual({
+      client_id: "http://localhost:8123/",
+      name: "Anna",
+      password: "Test1234!",
+      invite_pin: "123456",
+    });
+  });
+
+  it("join request has NO username field (server derives it)", () => {
+    expect(deriveJoinParams({ name: "Anna", password: "x" }, "123456")).not.toHaveProperty(
+      "username"
+    );
+  });
+
+  it("identity is filled when the display name is present", () => {
+    expect(joinIdentityFilled({ name: "Anna" })).toBe(true);
+    expect(joinIdentityFilled({ name: "" })).toBe(false);
+    expect(joinIdentityFilled({ email: "a@b.com" })).toBe(false);
+  });
+
+  it("submit needs name + valid + matching password (reuses same rules)", () => {
+    expect(
+      joinSubmitEnabled(
+        { name: "Anna", password: "Test1234!", password_confirm: "Test1234!" },
+        3
+      )
+    ).toBe(true);
+    expect(
+      joinSubmitEnabled(
+        { name: "", password: "Test1234!", password_confirm: "Test1234!" },
+        3
+      )
+    ).toBe(false);
+    expect(
+      joinSubmitEnabled(
+        { name: "Anna", password: "Test1234!", password_confirm: "Nope" },
+        3
+      )
+    ).toBe(false);
+    expect(
+      joinSubmitEnabled(
+        { name: "Anna", password: "weak", password_confirm: "weak" },
+        1
+      )
+    ).toBe(false);
+  });
+});

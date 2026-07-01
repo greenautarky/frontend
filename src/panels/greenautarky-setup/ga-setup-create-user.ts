@@ -12,7 +12,7 @@ import type {
   HaFormSchema,
 } from "../../components/ha-form/types";
 import { genClientId } from "home-assistant-js-websocket";
-import { createGASetupUser } from "../../data/greenautarky_setup";
+import { createGASetupUser, joinGASubUser } from "../../data/greenautarky_setup";
 import type { ValueChangedEvent } from "../../types";
 import { onBoardingStyles } from "../../onboarding/styles";
 import { gaBrandingStyles } from "../../onboarding/ga-branding";
@@ -26,6 +26,7 @@ import {
 const FIELD_LABELS: Record<string, string> = {
   email: "E-Mail-Adresse",
   username: "Benutzername",
+  name: "Anzeigename",
   password: "Passwort",
   password_confirm: "Passwort bestätigen",
 };
@@ -66,11 +67,27 @@ const USERNAME_SCHEMA: HaFormSchema[] = [
   ...PASSWORD_FIELDS,
 ];
 
+const NAME_SCHEMA: HaFormSchema[] = [
+  {
+    name: "name",
+    required: true,
+    selector: { text: { type: "text", autocomplete: "name" } },
+  },
+  ...PASSWORD_FIELDS,
+];
+
 @customElement("ga-setup-create-user")
 class GaSetupCreateUser extends LitElement {
   @property({ attribute: false }) public localize!: LocalizeFunc;
 
   @property() public language!: string;
+
+  /** Sub-user join mode: create a Non-Admin sub-user via an invite PIN instead
+   * of the device-onboarding create_user. Reuses all password UI + strength. */
+  @property({ type: Boolean }) public joinMode = false;
+
+  /** The invite PIN collected in the preceding PIN step (join mode). */
+  @property() public invitePin?: string;
 
   @state() private _useEmail = true;
 
@@ -91,6 +108,9 @@ class GaSetupCreateUser extends LitElement {
   @query("ha-form", true) private _form?: HaForm;
 
   private get _identityFilled(): boolean {
+    if (this.joinMode) {
+      return !!this._newUser.name;
+    }
     return this._useEmail ? !!this._newUser.email : !!this._newUser.username;
   }
 
@@ -102,7 +122,11 @@ class GaSetupCreateUser extends LitElement {
   protected render(): TemplateResult {
     return html`
       <h1 class="ga-header">Benutzerkonto erstellen</h1>
-      <p>Erstelle ein Benutzerkonto, um deinen KI-Butler zu verwalten.</p>
+      <p>
+        ${this.joinMode
+          ? "Lege dein Konto mit dem Einladungs-PIN an."
+          : "Erstelle ein Benutzerkonto, um deinen KI-Butler zu verwalten."}
+      </p>
 
       ${this._errorMsg
         ? html`<ha-alert alert-type="error">${this._errorMsg}</ha-alert>`
@@ -114,7 +138,11 @@ class GaSetupCreateUser extends LitElement {
         .data=${this._newUser}
         .disabled=${this._loading}
         .error=${this._formError}
-        .schema=${this._useEmail ? EMAIL_SCHEMA : USERNAME_SCHEMA}
+        .schema=${this.joinMode
+          ? NAME_SCHEMA
+          : this._useEmail
+            ? EMAIL_SCHEMA
+            : USERNAME_SCHEMA}
         @value-changed=${this._handleValueChanged}
       ></ha-form>
       ${this._newUser.password
@@ -150,11 +178,13 @@ class GaSetupCreateUser extends LitElement {
             </div>
           `
         : ""}
-      <a class="toggle-link" @click=${this._toggleMode}>
-        ${this._useEmail
-          ? "Ich habe keine E-Mail-Adresse"
-          : "E-Mail-Adresse verwenden"}
-      </a>
+      ${this.joinMode
+        ? ""
+        : html`<a class="toggle-link" @click=${this._toggleMode}>
+            ${this._useEmail
+              ? "Ich habe keine E-Mail-Adresse"
+              : "E-Mail-Adresse verwenden"}
+          </a>`}
       <div class="footer">
         <ha-button
           @click=${this._submitForm}
@@ -241,6 +271,17 @@ class GaSetupCreateUser extends LitElement {
     this._errorMsg = "";
 
     try {
+      if (this.joinMode) {
+        const result = await joinGASubUser({
+          client_id: genClientId(),
+          name: String(this._newUser.name),
+          password: String(this._newUser.password),
+          invite_pin: String(this.invitePin || ""),
+        });
+        fireEvent(this, "ga-setup-step", { type: "user", result: result as any });
+        return;
+      }
+
       let name: string;
       let username: string;
 
