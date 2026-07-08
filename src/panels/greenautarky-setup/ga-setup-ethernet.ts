@@ -8,6 +8,7 @@ import "../../components/ha-settings-row";
 import "../../components/ha-switch";
 import { setEthernetPreference } from "../../data/greenautarky_setup";
 import { onBoardingStyles } from "../../onboarding/styles";
+import { gaLogoIcon } from "../../onboarding/ga-branding";
 
 @customElement("ga-setup-ethernet")
 class GaSetupEthernet extends LitElement {
@@ -18,11 +19,7 @@ class GaSetupEthernet extends LitElement {
   protected render(): TemplateResult {
     return html`
       <div class="ga-header">
-        <img
-          src="/static/icons/favicon-192x192.png"
-          alt="greenautarky"
-          class="ga-logo"
-        />
+        ${gaLogoIcon}
         <h1>Netzwerk-Einstellungen</h1>
       </div>
       <p>

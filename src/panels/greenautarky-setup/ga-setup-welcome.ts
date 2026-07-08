@@ -6,8 +6,7 @@ import { fireEvent } from "../../common/dom/fire_event";
 import "../../components/ha-button";
 import { onBoardingStyles } from "../../onboarding/styles";
 import {
-  gaLogoSvg,
-  haLogoSvg,
+  gaLogoLockup,
   gaBrandingStyles,
   GA_WELCOME_HEADER,
   GA_WELCOME_INTRO,
@@ -20,11 +19,9 @@ class GaSetupWelcome extends LitElement {
   protected render(): TemplateResult {
     return html`
       <div class="brand-block">
-        <div class="brand-logos">
-          ${gaLogoSvg} ${haLogoSvg}
-        </div>
+        ${gaLogoLockup}
         <p class="brand-tagline">
-          <strong>greenautarky KI-Butler</strong>, powered by Home Assistant
+          <strong>GreenAutarky KI-Butler</strong>, powered by Home Assistant
         </p>
       </div>
 

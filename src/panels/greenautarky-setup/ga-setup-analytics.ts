@@ -13,6 +13,7 @@ import {
 } from "../../data/greenautarky_telemetry";
 import type { HomeAssistant } from "../../types";
 import { onBoardingStyles } from "../../onboarding/styles";
+import { gaLogoIcon } from "../../onboarding/ga-branding";
 
 @customElement("ga-setup-analytics")
 class GaSetupAnalytics extends LitElement {
@@ -48,12 +49,8 @@ class GaSetupAnalytics extends LitElement {
     // operator UI. See ga-ihost-docs/PRIVACY_TIERS.md.
     return html`
       <div class="ga-header">
-        <img
-          src="/static/icons/favicon-192x192.png"
-          alt="greenautarky"
-          class="ga-logo"
-        />
-        <h1>greenautarky Telemetrie</h1>
+        ${gaLogoIcon}
+        <h1>GreenAutarky Telemetrie</h1>
       </div>
       ${this._consentIsStale
         ? html`
@@ -179,7 +176,7 @@ class GaSetupAnalytics extends LitElement {
           href="https://greenautarky.com/datenschutz"
           target="_blank"
           rel="noopener"
-          >greenautarky Datenschutzerklärung</a
+          >GreenAutarky Datenschutzerklärung</a
         >. Sie können diese Einstellungen jederzeit unter
         <em>Einstellungen → Privatsphäre</em> ändern.
       </p>
