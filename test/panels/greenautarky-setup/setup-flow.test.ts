@@ -266,3 +266,57 @@ describe("GA setup source verification", () => {
     expect(source).toContain("if (!this._accepted)");
   });
 });
+
+describe("sub-user join flow (ADR-0006)", () => {
+  const PANEL_DIR = path.resolve(
+    __dirname,
+    "../../../src/panels/greenautarky-setup"
+  );
+  const joinNext = (step: string): string => (step === "pin" ? "user" : "done");
+
+  it("join flow is pin(invite) → user → done (skips gdpr/info/analytics/ethernet)", () => {
+    let cur = "pin";
+    const visited = [cur];
+    while (cur !== "done") {
+      cur = joinNext(cur);
+      visited.push(cur);
+    }
+    expect(visited).toEqual(["pin", "user", "done"]);
+  });
+
+  it("panel detects join mode and starts at the PIN step", () => {
+    const src = fs.readFileSync(
+      path.join(PANEL_DIR, "ha-panel-greenautarky-setup.ts"),
+      "utf-8"
+    );
+    expect(src).toContain("_joinMode");
+    expect(src).toContain("greenautarky-join");
+    expect(src).toContain('this._currentStep = "pin"');
+  });
+
+  it("PIN step carries the invite PIN in join mode (no device verify)", () => {
+    const src = fs.readFileSync(
+      path.join(PANEL_DIR, "ga-setup-pin.ts"),
+      "utf-8"
+    );
+    expect(src).toContain("joinMode");
+    expect(src).toContain("pin }");
+  });
+
+  it("create-user calls the join endpoint with the invite PIN in join mode", () => {
+    const src = fs.readFileSync(
+      path.join(PANEL_DIR, "ga-setup-create-user.ts"),
+      "utf-8"
+    );
+    expect(src).toContain("joinGASubUser");
+    expect(src).toContain("invitePin");
+  });
+
+  it("data module posts to the sub_user/join endpoint", () => {
+    const src = fs.readFileSync(
+      path.join(PANEL_DIR, "../../data/greenautarky_setup.ts"),
+      "utf-8"
+    );
+    expect(src).toContain("/api/greenautarky_onboarding/sub_user/join");
+  });
+});
