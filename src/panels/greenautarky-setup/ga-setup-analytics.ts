@@ -58,15 +58,15 @@ class GaSetupAnalytics extends LitElement {
       ${this._consentIsStale
         ? html`
             <div class="stale-consent-banner" role="alert">
-              <strong>Datenschutz-Hinweis aktualisiert.</strong> Bitte überprüfe
-              deine Einstellungen — die Tier-Beschreibungen oder
-              Rechtsgrundlagen wurden seit deiner letzten Zustimmung geändert.
+              <strong>Datenschutz-Hinweis aktualisiert.</strong> Bitte überprüfen
+              Sie Ihre Einstellungen — die Tier-Beschreibungen oder
+              Rechtsgrundlagen wurden seit Ihrer letzten Zustimmung geändert.
             </div>
           `
         : ""}
       <p class="intro">
         Wir gruppieren Telemetriedaten in drei Stufen mit unterschiedlichen
-        Rechtsgrundlagen. Du entscheidest pro Stufe, ob wir sie verarbeiten
+        Rechtsgrundlagen. Sie entscheiden pro Stufe, ob wir sie verarbeiten
         dürfen.
       </p>
 
@@ -77,7 +77,7 @@ class GaSetupAnalytics extends LitElement {
           <span class="badge always-on">immer aktiv</span>
         </header>
         <p class="description">
-          Daten, die wir benötigen, um dein Gerät warten und kritische
+          Daten, die wir benötigen, um Ihr Gerät warten und kritische
           Sicherheitslücken schließen zu können — z.B. OTA-Update-Status,
           Kernel-Panics, fehlgeschlagene Authentifizierungen.
         </p>
@@ -121,7 +121,7 @@ class GaSetupAnalytics extends LitElement {
         </p>
         <p class="legal-basis">
           Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse).
-          Du kannst dies jederzeit deaktivieren.
+          Sie können dies jederzeit deaktivieren.
         </p>
         <details>
           <summary>Mehr erfahren</summary>
@@ -132,7 +132,7 @@ class GaSetupAnalytics extends LitElement {
             <li>Z-Wave/Zigbee-Treiber-Fehler</li>
           </ul>
           <p class="footnote">
-            Anonymisiert über deine Geräte-ID. Aufbewahrung: 90 Tage. Du kannst
+            Anonymisiert über Ihre Geräte-ID. Aufbewahrung: 90 Tage. Sie können
             die Verarbeitung jederzeit mit Wirkung für die Zukunft widerrufen.
           </p>
         </details>
@@ -167,7 +167,7 @@ class GaSetupAnalytics extends LitElement {
             <li>Add-on-Performance (Container-Restart-Zähler)</li>
           </ul>
           <p class="footnote">
-            Anonymisiert über deine Geräte-ID. Aufbewahrung: 30 Tage. Wir
+            Anonymisiert über Ihre Geräte-ID. Aufbewahrung: 30 Tage. Wir
             verkaufen diese Daten nicht und nutzen sie nicht für Werbung.
           </p>
         </details>
@@ -180,14 +180,12 @@ class GaSetupAnalytics extends LitElement {
           target="_blank"
           rel="noopener"
           >greenautarky Datenschutzerklärung</a
-        >. Du kannst diese Einstellungen jederzeit unter
+        >. Sie können diese Einstellungen jederzeit unter
         <em>Einstellungen → Privatsphäre</em> ändern.
       </p>
 
       <div class="footer">
-        <ha-button @click=${this._save}>
-          ${this.localize("ui.panel.page-onboarding.analytics.finish")}
-        </ha-button>
+        <ha-button @click=${this._save}>Fertig</ha-button>
       </div>
     `;
   }

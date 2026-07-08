@@ -24,7 +24,7 @@ class GaSetupWelcome extends LitElement {
           ${gaLogoSvg} ${haLogoSvg}
         </div>
         <p class="brand-tagline">
-          <strong>greenautarky KI-Butler</strong> powered by Home Assistant
+          <strong>greenautarky KI-Butler</strong>, powered by Home Assistant
         </p>
       </div>
 
@@ -32,7 +32,7 @@ class GaSetupWelcome extends LitElement {
       <p>${GA_WELCOME_INTRO}</p>
 
       <ha-button @click=${this._start} class="start" unelevated>
-        Mein KI-Butler einrichten
+        Meinen KI-Butler einrichten
       </ha-button>
     `;
   }

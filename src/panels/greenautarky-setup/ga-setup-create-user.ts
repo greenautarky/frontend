@@ -32,7 +32,7 @@ const FIELD_LABELS: Record<string, string> = {
 
 const FIELD_HELPERS: Record<string, string> = {
   password:
-    "Wähle ein sicheres Passwort. Merke es dir gut, damit du es nicht vergisst.",
+    "Wählen Sie ein sicheres Passwort. Merken Sie es sich gut, damit Sie es nicht vergessen.",
 };
 
 const PASSWORD_FIELDS: HaFormSchema[] = [
@@ -102,7 +102,7 @@ class GaSetupCreateUser extends LitElement {
   protected render(): TemplateResult {
     return html`
       <h1 class="ga-header">Benutzerkonto erstellen</h1>
-      <p>Erstelle ein Benutzerkonto, um deinen KI-Butler zu verwalten.</p>
+      <p>Erstellen Sie ein Benutzerkonto, um Ihren KI-Butler zu verwalten.</p>
 
       ${this._errorMsg
         ? html`<ha-alert alert-type="error">${this._errorMsg}</ha-alert>`

@@ -7,36 +7,36 @@ import { GA_PRODUCT_NAME } from "../ga-branding";
 class OnboardingPageInfo extends LitElement {
   protected render(): TemplateResult {
     return html`
-      <h2>Ueber deinen ${GA_PRODUCT_NAME}</h2>
+      <h2>Über Ihren ${GA_PRODUCT_NAME}</h2>
       <p>
-        Dein KI-Butler ist ein lokaler Smart-Home-Hub, der deine Daten schuetzt.
-        Er unterstuetzt Zigbee-, WLAN- und Ethernet-Geraete.
+        Ihr KI-Butler ist ein lokaler Smart-Home-Hub, der Ihre Daten schützt. Er
+        verbindet sich mit Funkgeräten (Zigbee), WLAN- und Ethernet-Geräten.
       </p>
       <ul>
-        <li>Alle Automatisierungen laufen lokal auf dem Geraet</li>
-        <li>Keine Cloud-Abhaengigkeit erforderlich</li>
-        <li>Erweiterbar mit Add-ons und Integrationen</li>
+        <li>Alle Automatisierungen laufen lokal auf dem Gerät</li>
+        <li>Keine Cloud-Abhängigkeit erforderlich</li>
+        <li>Erweiterbar mit Add-ons und Integrationen (Erweiterungen für weitere Geräte und Dienste)</li>
       </ul>
 
       <h2>Erste Schritte</h2>
-      <p>Nach der Einrichtung kannst du:</p>
+      <p>Nach der Einrichtung können Sie:</p>
       <ul>
-        <li>Smart-Geraete hinzufuegen unter <strong>Einstellungen &gt; Geraete</strong></li>
+        <li>Smart-Geräte hinzufügen unter <strong>Einstellungen &gt; Geräte</strong></li>
         <li>Automatisierungen erstellen unter <strong>Einstellungen &gt; Automatisierungen</strong></li>
         <li>Add-ons installieren unter <strong>Einstellungen &gt; Add-ons</strong></li>
-        <li>Dein Dashboard auf der Uebersichtsseite anpassen</li>
+        <li>Ihr Dashboard auf der Übersichtsseite anpassen</li>
       </ul>
 
-      <h2>Hilfe benoetigt?</h2>
+      <h2>Hilfe benötigt?</h2>
       <p>
-        Besuche die Dokumentation auf
+        Besuchen Sie das Handbuch auf
         <a
-          href="https://www.home-assistant.io/docs/"
+          href="https://greenautarky.com/handbuch"
           target="_blank"
           rel="noreferrer noopener"
-          >home-assistant.io/docs</a
+          >greenautarky.com/handbuch</a
         >
-        oder wende dich an die Community-Foren.
+        oder wenden Sie sich an unseren Support.
       </p>
     `;
   }

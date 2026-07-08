@@ -14,7 +14,7 @@ class GaSetupInfoPages extends LitElement {
 
   protected render(): TemplateResult {
     return html`
-      <h1 class="ga-header">Dein KI-Butler</h1>
+      <h1 class="ga-header">Ihr KI-Butler</h1>
 
       <div class="page-content">
         <onboarding-page-info></onboarding-page-info>

@@ -22,30 +22,37 @@ class GaSetupGdpr extends LitElement {
     return html`
       <h1 class="ga-header">Datenschutz</h1>
       <p>
-        Bitte lies und akzeptiere die Datenschutzerklaerung fuer
-        ${GA_PRODUCT_NAME}, bevor du dein Konto erstellst.
+        Bitte lesen Sie die
+        <a
+          href="https://greenautarky.com/datenschutz"
+          target="_blank"
+          rel="noopener"
+          >Datenschutzerklärung</a
+        >
+        für den ${GA_PRODUCT_NAME} und akzeptieren Sie sie, bevor Sie Ihr Konto
+        erstellen.
       </p>
 
       <div class="gdpr-content">
         <h2>Datenverarbeitung</h2>
         <p>
-          Dein ${GA_PRODUCT_NAME} verarbeitet Daten lokal auf deinem Geraet.
-          Persoenliche Daten wie dein Benutzername und deine Konfiguration
-          werden ausschliesslich auf diesem Geraet gespeichert und nicht an
-          externe Server uebertragen, es sei denn, du aktivierst ausdruecklich
-          Cloud-Dienste oder Analysen.
+          Ihr ${GA_PRODUCT_NAME} verarbeitet Daten lokal auf Ihrem Gerät.
+          Persönliche Daten wie Ihr Benutzername und Ihre Konfiguration werden
+          ausschließlich auf diesem Gerät gespeichert und nicht an externe Server
+          übertragen, es sei denn, Sie aktivieren ausdrücklich Cloud-Dienste oder
+          Analysen.
         </p>
 
-        <h2>Deine Rechte</h2>
+        <h2>Ihre Rechte</h2>
         <ul>
-          <li>Alle Daten werden lokal auf deinem Geraet gespeichert</li>
-          <li>Du kannst deine Daten jederzeit exportieren oder loeschen</li>
-          <li>Analysen und Diagnosen sind optional und standardmaessig deaktiviert</li>
-          <li>Drittanbieter-Integrationen teilen Daten nur bei ausdruecklicher Konfiguration</li>
+          <li>Alle Daten werden lokal auf Ihrem Gerät gespeichert</li>
+          <li>Sie können Ihre Daten jederzeit exportieren oder löschen</li>
+          <li>Analysen und Diagnosen sind optional und standardmäßig deaktiviert</li>
+          <li>Drittanbieter-Integrationen teilen Daten nur bei ausdrücklicher Konfiguration</li>
         </ul>
       </div>
 
-      <ha-formfield .label=${"Ich akzeptiere die Datenschutzerklaerung"}>
+      <ha-formfield .label=${"Ich akzeptiere die Datenschutzerklärung"}>
         <ha-checkbox
           @change=${this._acceptChanged}
           .checked=${this._accepted}
