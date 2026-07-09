@@ -62,6 +62,8 @@ export const joinGASubUser = (params: {
   name: string;
   password: string;
   invite_pin: string;
+  /** Required Datenschutz consent (sub-user = separate data subject). */
+  datenschutz_consent: boolean;
 }): Promise<GASubUserJoinResponse> =>
   handleFetchPromise<GASubUserJoinResponse>(
     fetch("/api/greenautarky_onboarding/sub_user/join", {

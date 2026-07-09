@@ -5,6 +5,8 @@ import { fireEvent } from "../../common/dom/fire_event";
 import type { LocalizeFunc } from "../../common/translations/localize";
 import { debounce } from "../../common/util/debounce";
 import "../../components/ha-button";
+import "../../components/ha-checkbox";
+import "../../components/ha-formfield";
 import "../../components/ha-form/ha-form";
 import type { HaForm } from "../../components/ha-form/ha-form";
 import type {
@@ -105,6 +107,10 @@ class GaSetupCreateUser extends LitElement {
     color: "transparent",
   };
 
+  /** Datenschutz consent (join mode only). A sub-user is a separate data
+   * subject, so the join captures its own consent; enforced server-side too. */
+  @state() private _datenschutzAccepted = false;
+
   @query("ha-form", true) private _form?: HaForm;
 
   private get _identityFilled(): boolean {
@@ -179,7 +185,27 @@ class GaSetupCreateUser extends LitElement {
           `
         : ""}
       ${this.joinMode
-        ? ""
+        ? html`
+            <div class="consent">
+              <p class="consent-note">
+                Bitte lesen Sie die
+                <a
+                  href="https://greenautarky.com/datenschutz"
+                  target="_blank"
+                  rel="noopener"
+                  >Datenschutzerklärung</a
+                >
+                und akzeptieren Sie sie, bevor Sie Ihr Konto erstellen. Für Ihr
+                Konto wird ein Profil ohne Standortdaten angelegt.
+              </p>
+              <ha-formfield .label=${"Ich akzeptiere die Datenschutzerklärung"}>
+                <ha-checkbox
+                  @change=${this._datenschutzChanged}
+                  .checked=${this._datenschutzAccepted}
+                ></ha-checkbox>
+              </ha-formfield>
+            </div>
+          `
         : html`<a class="toggle-link" @click=${this._toggleMode}>
             ${this._useEmail
               ? "Ich habe keine E-Mail-Adresse"
@@ -192,7 +218,8 @@ class GaSetupCreateUser extends LitElement {
           !this._identityFilled ||
           !this._passwordValid ||
           !this._newUser.password_confirm ||
-          this._newUser.password !== this._newUser.password_confirm}
+          this._newUser.password !== this._newUser.password_confirm ||
+          (this.joinMode && !this._datenschutzAccepted)}
         >
           Konto erstellen
         </ha-button>
@@ -209,7 +236,8 @@ class GaSetupCreateUser extends LitElement {
         this._identityFilled &&
         this._passwordValid &&
         this._newUser.password_confirm &&
-        this._newUser.password === this._newUser.password_confirm
+        this._newUser.password === this._newUser.password_confirm &&
+        (!this.joinMode || this._datenschutzAccepted)
       ) {
         this._submitForm(ev);
       }
@@ -221,6 +249,10 @@ class GaSetupCreateUser extends LitElement {
     this._newUser = {};
     this._formError = {};
     this._errorMsg = "";
+  }
+
+  private _datenschutzChanged(ev: Event): void {
+    this._datenschutzAccepted = (ev.target as HTMLInputElement).checked;
   }
 
   private _computeLabel = (schema: HaFormSchema) =>
@@ -277,6 +309,7 @@ class GaSetupCreateUser extends LitElement {
           name: String(this._newUser.name),
           password: String(this._newUser.password),
           invite_pin: String(this.invitePin || ""),
+          datenschutz_consent: this._datenschutzAccepted,
         });
         fireEvent(this, "ga-setup-step", { type: "user", result: result as any });
         return;
@@ -326,6 +359,17 @@ class GaSetupCreateUser extends LitElement {
           color: var(--primary-color);
           cursor: pointer;
           font-size: 14px;
+        }
+        .consent {
+          margin-top: 16px;
+        }
+        .consent-note {
+          font-size: 0.9rem;
+          color: var(--secondary-text-color, #757575);
+          margin-bottom: 8px;
+        }
+        .consent ha-formfield {
+          display: block;
         }
         .toggle-link:hover {
           text-decoration: underline;
