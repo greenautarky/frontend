@@ -6,6 +6,7 @@ import "./demo.js";
 import "./download-translations.js";
 import "./entry-html.js";
 import "./fetch-nightly-translations.js";
+import "./ga-wizard.js";
 import "./gallery.js";
 import "./gather-static.js";
 import "./gen-icons-json.js";

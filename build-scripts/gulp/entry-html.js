@@ -192,6 +192,20 @@ gulp.task(
   )
 );
 
+// GA #512: page-gen for the self-contained wizard-only build (ga-wizard.js).
+// Same generator as the app pages, but the manifest only carries the wizard
+// entry, so only its page may be generated.
+gulp.task(
+  "gen-pages-ga-wizard-prod",
+  genPagesProdTask(
+    { "greenautarky-setup.html": ["greenautarky-setup"] },
+    paths.root_dir,
+    paths.app_output_root,
+    paths.app_output_latest,
+    paths.app_output_es5
+  )
+);
+
 const CAST_PAGE_ENTRIES = {
   "faq.html": ["launcher"],
   "index.html": ["launcher"],
