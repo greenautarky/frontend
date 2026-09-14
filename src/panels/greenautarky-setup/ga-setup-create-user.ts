@@ -25,18 +25,33 @@ import {
   PASSWORD_RULES,
 } from "./password-strength";
 
-const FIELD_LABELS: Record<string, string> = {
-  email: "E-Mail-Adresse",
-  username: "Benutzername",
-  name: "Anzeigename",
-  password: "Passwort",
-  password_confirm: "Passwort bestätigen",
+// ha-form field name → localization key (labels resolved via this.localize).
+const FIELD_LABEL_KEYS: Record<string, string> = {
+  email: "ui.panel.greenautarky_setup.user.field_email",
+  username: "ui.panel.greenautarky_setup.user.field_username",
+  name: "ui.panel.greenautarky_setup.user.field_name",
+  password: "ui.panel.greenautarky_setup.user.field_password",
+  password_confirm: "ui.panel.greenautarky_setup.user.field_password_confirm",
 };
 
-const FIELD_HELPERS: Record<string, string> = {
-  password:
-    "Wählen Sie ein sicheres Passwort. Merken Sie es sich gut, damit Sie es nicht vergessen.",
+const FIELD_HELPER_KEYS: Record<string, string> = {
+  password: "ui.panel.greenautarky_setup.user.password_helper",
 };
+
+const PW_STRENGTH_KEYS = [
+  "ui.panel.greenautarky_setup.user.pw_strength_0",
+  "ui.panel.greenautarky_setup.user.pw_strength_1",
+  "ui.panel.greenautarky_setup.user.pw_strength_2",
+  "ui.panel.greenautarky_setup.user.pw_strength_3",
+  "ui.panel.greenautarky_setup.user.pw_strength_4",
+];
+
+const PW_RULE_KEYS = [
+  "ui.panel.greenautarky_setup.user.pw_rule_0",
+  "ui.panel.greenautarky_setup.user.pw_rule_1",
+  "ui.panel.greenautarky_setup.user.pw_rule_2",
+  "ui.panel.greenautarky_setup.user.pw_rule_3",
+];
 
 const PASSWORD_FIELDS: HaFormSchema[] = [
   {
@@ -127,11 +142,13 @@ class GaSetupCreateUser extends LitElement {
 
   protected render(): TemplateResult {
     return html`
-      <h1 class="ga-header">Benutzerkonto erstellen</h1>
+      <h1 class="ga-header">
+        ${this.localize("ui.panel.greenautarky_setup.user.title")}
+      </h1>
       <p>
         ${this.joinMode
-          ? "Legen Sie Ihr Konto mit dem Einladungs-PIN an."
-          : "Erstellen Sie ein Benutzerkonto, um Ihren KI-Butler zu verwalten."}
+          ? this.localize("ui.panel.greenautarky_setup.user.subtitle_join")
+          : this.localize("ui.panel.greenautarky_setup.user.subtitle")}
       </p>
 
       ${this._errorMsg
@@ -170,13 +187,13 @@ class GaSetupCreateUser extends LitElement {
                 class="strength-label"
                 style="color: ${this._passwordStrength.color}"
               >
-                ${this._passwordStrength.label}
+                ${this._pwStrengthLabel()}
               </span>
               <ul class="password-rules">
                 ${PASSWORD_RULES.map(
-                  (rule) => html`
+                  (rule, i) => html`
                     <li class=${rule.test(String(this._newUser.password)) ? "met" : ""}>
-                      ${rule.label}
+                      ${this._pwRuleLabel(i)}
                     </li>
                   `
                 )}
@@ -188,17 +205,26 @@ class GaSetupCreateUser extends LitElement {
         ? html`
             <div class="consent">
               <p class="consent-note">
-                Bitte lesen Sie die
+                ${this.localize(
+                  "ui.panel.greenautarky_setup.user.consent_lead"
+                )}
                 <a
                   href="https://greenautarky.com/datenschutz"
                   target="_blank"
                   rel="noopener"
-                  >Datenschutzerklärung</a
+                  >${this.localize(
+                    "ui.panel.greenautarky_setup.gdpr.privacy_policy"
+                  )}</a
                 >
-                und akzeptieren Sie sie, bevor Sie Ihr Konto erstellen. Für Ihr
-                Konto wird ein Profil ohne Standortdaten angelegt.
+                ${this.localize(
+                  "ui.panel.greenautarky_setup.user.consent_tail"
+                )}
               </p>
-              <ha-formfield .label=${"Ich akzeptiere die Datenschutzerklärung"}>
+              <ha-formfield
+                .label=${this.localize(
+                  "ui.panel.greenautarky_setup.user.consent_label"
+                )}
+              >
                 <ha-checkbox
                   @change=${this._datenschutzChanged}
                   .checked=${this._datenschutzAccepted}
@@ -208,8 +234,12 @@ class GaSetupCreateUser extends LitElement {
           `
         : html`<a class="toggle-link" @click=${this._toggleMode}>
             ${this._useEmail
-              ? "Ich habe keine E-Mail-Adresse"
-              : "E-Mail-Adresse verwenden"}
+              ? this.localize(
+                  "ui.panel.greenautarky_setup.user.toggle_no_email"
+                )
+              : this.localize(
+                  "ui.panel.greenautarky_setup.user.toggle_use_email"
+                )}
           </a>`}
       <div class="footer">
         <ha-button
@@ -221,7 +251,7 @@ class GaSetupCreateUser extends LitElement {
           this._newUser.password !== this._newUser.password_confirm ||
           (this.joinMode && !this._datenschutzAccepted)}
         >
-          Konto erstellen
+          ${this.localize("ui.panel.greenautarky_setup.user.submit")}
         </ha-button>
       </div>
     `;
@@ -255,11 +285,27 @@ class GaSetupCreateUser extends LitElement {
     this._datenschutzAccepted = (ev.target as HTMLInputElement).checked;
   }
 
-  private _computeLabel = (schema: HaFormSchema) =>
-    FIELD_LABELS[schema.name] ?? schema.name;
+  private _computeLabel = (schema: HaFormSchema) => {
+    const key = FIELD_LABEL_KEYS[schema.name];
+    return key ? this.localize(key as any) : schema.name;
+  };
 
-  private _computeHelper = (schema: HaFormSchema) =>
-    FIELD_HELPERS[schema.name] ?? "";
+  private _computeHelper = (schema: HaFormSchema) => {
+    const key = FIELD_HELPER_KEYS[schema.name];
+    return key ? this.localize(key as any) : "";
+  };
+
+  private _pwStrengthLabel(): string {
+    const key = PW_STRENGTH_KEYS[this._passwordStrength.score];
+    return key ? this.localize(key as any) : "";
+  }
+
+  private _pwRuleLabel(index: number): string {
+    const key = PW_RULE_KEYS[index];
+    return key
+      ? this.localize(key as any, { count: MIN_PASSWORD_LENGTH })
+      : "";
+  }
 
   private _handleValueChanged(
     ev: ValueChangedEvent<HaFormDataContainer>
@@ -290,7 +336,7 @@ class GaSetupCreateUser extends LitElement {
     this._formError.password_confirm =
       this._newUser.password_confirm &&
       this._newUser.password !== this._newUser.password_confirm
-        ? "Passwörter stimmen nicht überein"
+        ? this.localize("ui.panel.greenautarky_setup.user.password_mismatch")
         : "";
     if (old !== this._formError.password_confirm) {
       this.requestUpdate("_formError");

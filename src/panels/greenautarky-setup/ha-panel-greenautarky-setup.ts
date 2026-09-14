@@ -33,6 +33,7 @@ import "./ga-setup-analytics";
 import "./ga-setup-ethernet";
 import { advance, canGoBack, goBack, progressFor } from "./setup-flow";
 import type { GASetupStepType } from "./setup-flow";
+import { buildGaLocalize, GA_SUPPORTED_LANGUAGES } from "./ga-localize";
 
 interface GASetupEvent {
   type: GASetupStepType;
@@ -59,8 +60,9 @@ declare global {
 class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
   @property({ attribute: false }) public hass?: HomeAssistant;
 
-  @property({ attribute: false }) public translationFragment =
-    "page-onboarding";
+  // NB: no translationFragment — the wizard does NOT fetch a runtime fragment
+  // (German is primary and self-contained). this.localize is built from the
+  // bundled de.ts/en.ts tables in _rebuildLocalize() below.
 
   @state() private _currentStep: GASetupStepType = "welcome";
 
@@ -111,6 +113,7 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
       <div class="footer">
         <ha-language-picker
           .value=${this.language}
+          .languages=${[...GA_SUPPORTED_LANGUAGES]}
           .label=${""}
           native-name
           @value-changed=${this._languageChanged}
@@ -138,6 +141,7 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
         ></ga-setup-welcome>`;
       case "pin":
         return html`<ga-setup-pin
+          .localize=${this.localize}
           .autoPin=${this._autoPin}
           .joinMode=${this._joinMode}
         ></ga-setup-pin>`;
@@ -181,6 +185,8 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
       this.language = "de";
       window.localStorage.setItem("selectedLanguage", JSON.stringify("de"));
     }
+    // Build localize() from the bundled de/en tables (no runtime fragment).
+    this._rebuildLocalize();
     this.addEventListener("ga-setup-step", (ev) => this._handleStep(ev));
     // "Zurück" button (gdpr / info_pages / analytics / ethernet) and the
     // browser Back button both route through the SAME reducer, so they produce
@@ -299,7 +305,7 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
         // create-user and create a second account server-side.
         this._goForward("info_pages");
       } catch (_err: any) {
-        alert("Etwas ist schiefgelaufen. Bitte versuche es erneut.");
+        alert(this.localize("ui.panel.greenautarky_setup.panel.error_retry"));
         location.reload();
       } finally {
         this._loading = false;
@@ -402,9 +408,14 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
     });
   }
 
+  private async _rebuildLocalize() {
+    this.localize = await buildGaLocalize(this, this.language);
+  }
+
   private _languageChanged(ev: CustomEvent) {
     const language = ev.detail.value;
     this.language = language;
+    this._rebuildLocalize();
     if (this.hass) {
       this._updateHass({
         locale: { ...this.hass!.locale, language },

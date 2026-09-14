@@ -17,7 +17,9 @@ class GaSetupInfoPages extends LitElement {
 
   protected render(): TemplateResult {
     return html`
-      <h1 class="ga-header">Ihr KI-Butler</h1>
+      <h1 class="ga-header">
+        ${this.localize("ui.panel.greenautarky_setup.info_pages.header")}
+      </h1>
 
       <div class="page-content">
         <onboarding-page-info></onboarding-page-info>
@@ -26,10 +28,14 @@ class GaSetupInfoPages extends LitElement {
       <div class="footer">
         ${this.canBack
           ? html`<ha-button class="back" @click=${this._back}
-              >Zurück</ha-button
+              >${this.localize(
+                "ui.panel.greenautarky_setup.common.back"
+              )}</ha-button
             >`
           : html`<span></span>`}
-        <ha-button unelevated @click=${this._finish}>Weiter</ha-button>
+        <ha-button unelevated @click=${this._finish}
+          >${this.localize("ui.panel.greenautarky_setup.common.next")}</ha-button
+        >
       </div>
     `;
   }

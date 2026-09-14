@@ -53,53 +53,81 @@ class GaSetupAnalytics extends LitElement {
     return html`
       <div class="ga-header">
         ${gaLogoIcon}
-        <h1>GreenAutarky Telemetrie</h1>
+        <h1>${this.localize("ui.panel.greenautarky_setup.analytics.title")}</h1>
       </div>
       ${this._consentIsStale
         ? html`
             <div class="stale-consent-banner" role="alert">
-              <strong>Datenschutz-Hinweis aktualisiert.</strong> Bitte überprüfen
-              Sie Ihre Einstellungen — die Tier-Beschreibungen oder
-              Rechtsgrundlagen wurden seit Ihrer letzten Zustimmung geändert.
+              <strong
+                >${this.localize(
+                  "ui.panel.greenautarky_setup.analytics.stale_banner_strong"
+                )}</strong
+              >
+              ${this.localize(
+                "ui.panel.greenautarky_setup.analytics.stale_banner_text"
+              )}
             </div>
           `
         : ""}
       <p class="intro">
-        Wir gruppieren Telemetriedaten in drei Stufen mit unterschiedlichen
-        Rechtsgrundlagen. Sie entscheiden pro Stufe, ob wir sie verarbeiten
-        dürfen.
+        ${this.localize("ui.panel.greenautarky_setup.analytics.intro")}
       </p>
 
       <!-- Tier 0 — Betriebsnotwendig, always-on. No toggle. -->
       <section class="tier tier-0">
         <header>
-          <h2>Betriebsnotwendige Daten</h2>
-          <span class="badge always-on">immer aktiv</span>
+          <h2>
+            ${this.localize(
+              "ui.panel.greenautarky_setup.analytics.tier0_title"
+            )}
+          </h2>
+          <span class="badge always-on"
+            >${this.localize(
+              "ui.panel.greenautarky_setup.analytics.tier0_badge"
+            )}</span
+          >
         </header>
         <p class="description">
-          Daten, die wir benötigen, um Ihr Gerät warten und kritische
-          Sicherheitslücken schließen zu können — z.B. OTA-Update-Status,
-          Kernel-Panics, fehlgeschlagene Authentifizierungen.
+          ${this.localize("ui.panel.greenautarky_setup.analytics.tier0_desc")}
         </p>
         <p class="legal-basis">
-          Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung) + lit.
-          f DSGVO (berechtigtes Interesse — IT-Sicherheit).
+          ${this.localize("ui.panel.greenautarky_setup.analytics.tier0_legal")}
         </p>
         <details>
-          <summary>Mehr erfahren</summary>
+          <summary>
+            ${this.localize("ui.panel.greenautarky_setup.analytics.more")}
+          </summary>
           <ul class="examples">
-            <li>Geräte-ID (pseudonymisiert), Firmware- und Core-Version</li>
-            <li>RAUC-Update-Status (Slot, letztes Update, Roll-back-Events)</li>
-            <li>Kernel-Panics und Watchdog-Resets</li>
             <li>
-              Fehlgeschlagene SSH-/Web-Anmeldungen (zählend, ohne Klartext)
+              ${this.localize(
+                "ui.panel.greenautarky_setup.analytics.tier0_ex_1"
+              )}
             </li>
-            <li>Supervisor-Fehler beim Starten von Add-ons</li>
+            <li>
+              ${this.localize(
+                "ui.panel.greenautarky_setup.analytics.tier0_ex_2"
+              )}
+            </li>
+            <li>
+              ${this.localize(
+                "ui.panel.greenautarky_setup.analytics.tier0_ex_3"
+              )}
+            </li>
+            <li>
+              ${this.localize(
+                "ui.panel.greenautarky_setup.analytics.tier0_ex_4"
+              )}
+            </li>
+            <li>
+              ${this.localize(
+                "ui.panel.greenautarky_setup.analytics.tier0_ex_5"
+              )}
+            </li>
           </ul>
           <p class="footnote">
-            Diese Stufe lässt sich nicht abschalten, weil ohne sie keine Updates
-            und kein Security-Patching möglich sind. Aufbewahrung: 365 Tage in
-            der Sicherheits-Audit-Pipeline.
+            ${this.localize(
+              "ui.panel.greenautarky_setup.analytics.tier0_footnote"
+            )}
           </p>
         </details>
       </section>
@@ -107,33 +135,56 @@ class GaSetupAnalytics extends LitElement {
       <!-- Tier 1 — Fehlerberichte, default ON (opt-out). -->
       <section class="tier tier-1">
         <header>
-          <h2>Fehlerberichte (empfohlen)</h2>
+          <h2>
+            ${this.localize(
+              "ui.panel.greenautarky_setup.analytics.tier1_title"
+            )}
+          </h2>
           <ha-switch
             .checked=${this._gaPrefs.error_logs}
             @change=${this._gaErrorLogsChanged}
             name="ga_error_logs"
-            aria-label="Fehlerberichte"
+            aria-label=${this.localize(
+              "ui.panel.greenautarky_setup.analytics.tier1_aria"
+            )}
           ></ha-switch>
         </header>
         <p class="description">
-          Anonyme Fehler- und Warnprotokolle aus Home Assistant und Add-ons.
-          Helfen uns, Bugs schnell zu finden und zu beheben.
+          ${this.localize("ui.panel.greenautarky_setup.analytics.tier1_desc")}
         </p>
         <p class="legal-basis">
-          Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse).
-          Sie können dies jederzeit deaktivieren.
+          ${this.localize("ui.panel.greenautarky_setup.analytics.tier1_legal")}
         </p>
         <details>
-          <summary>Mehr erfahren</summary>
+          <summary>
+            ${this.localize("ui.panel.greenautarky_setup.analytics.more")}
+          </summary>
           <ul class="examples">
-            <li>Stacktraces aus Home-Assistant-Crashes</li>
-            <li>Add-on-Konflikte und Konfigurationsfehler</li>
-            <li>Integration-Setup-Failures (ohne Zugangsdaten)</li>
-            <li>Z-Wave/Zigbee-Treiber-Fehler</li>
+            <li>
+              ${this.localize(
+                "ui.panel.greenautarky_setup.analytics.tier1_ex_1"
+              )}
+            </li>
+            <li>
+              ${this.localize(
+                "ui.panel.greenautarky_setup.analytics.tier1_ex_2"
+              )}
+            </li>
+            <li>
+              ${this.localize(
+                "ui.panel.greenautarky_setup.analytics.tier1_ex_3"
+              )}
+            </li>
+            <li>
+              ${this.localize(
+                "ui.panel.greenautarky_setup.analytics.tier1_ex_4"
+              )}
+            </li>
           </ul>
           <p class="footnote">
-            Anonymisiert über Ihre Geräte-ID. Aufbewahrung: 90 Tage. Sie können
-            die Verarbeitung jederzeit mit Wirkung für die Zukunft widerrufen.
+            ${this.localize(
+              "ui.panel.greenautarky_setup.analytics.tier1_footnote"
+            )}
           </p>
         </details>
       </section>
@@ -141,56 +192,90 @@ class GaSetupAnalytics extends LitElement {
       <!-- Tier 2 — Detaillierte Leistungsdaten, default OFF (opt-in). -->
       <section class="tier tier-2">
         <header>
-          <h2>Detaillierte Leistungsdaten</h2>
+          <h2>
+            ${this.localize(
+              "ui.panel.greenautarky_setup.analytics.tier2_title"
+            )}
+          </h2>
           <ha-switch
             .checked=${this._gaPrefs.metrics}
             @change=${this._gaMetricsChanged}
             name="ga_metrics"
-            aria-label="Detaillierte Leistungsdaten"
+            aria-label=${this.localize(
+              "ui.panel.greenautarky_setup.analytics.tier2_aria"
+            )}
           ></ha-switch>
         </header>
         <p class="description">
-          Performance-Metriken wie CPU-Last, Speicherbelegung und Netzwerklatenz
-          im Zeitverlauf. Helfen uns, ineffiziente Konfigurationen früh zu
-          erkennen.
+          ${this.localize("ui.panel.greenautarky_setup.analytics.tier2_desc")}
         </p>
         <p class="legal-basis">
-          Rechtsgrundlage: Art. 6 Abs. 1 lit. a DSGVO (Einwilligung) — bitte
-          aktiv zustimmen.
+          ${this.localize("ui.panel.greenautarky_setup.analytics.tier2_legal")}
         </p>
         <details>
-          <summary>Mehr erfahren</summary>
+          <summary>
+            ${this.localize("ui.panel.greenautarky_setup.analytics.more")}
+          </summary>
           <ul class="examples">
-            <li>CPU- und RAM-Auslastung (Minuten-Snapshots)</li>
-            <li>Disk-I/O und eMMC-Wear-Indikatoren</li>
-            <li>Netzwerklatenz zum Internet und zu lokalen Hubs</li>
-            <li>Add-on-Performance (Container-Restart-Zähler)</li>
+            <li>
+              ${this.localize(
+                "ui.panel.greenautarky_setup.analytics.tier2_ex_1"
+              )}
+            </li>
+            <li>
+              ${this.localize(
+                "ui.panel.greenautarky_setup.analytics.tier2_ex_2"
+              )}
+            </li>
+            <li>
+              ${this.localize(
+                "ui.panel.greenautarky_setup.analytics.tier2_ex_3"
+              )}
+            </li>
+            <li>
+              ${this.localize(
+                "ui.panel.greenautarky_setup.analytics.tier2_ex_4"
+              )}
+            </li>
           </ul>
           <p class="footnote">
-            Anonymisiert über Ihre Geräte-ID. Aufbewahrung: 30 Tage. Wir
-            verkaufen diese Daten nicht und nutzen sie nicht für Werbung.
+            ${this.localize(
+              "ui.panel.greenautarky_setup.analytics.tier2_footnote"
+            )}
           </p>
         </details>
       </section>
 
       <p class="policy-link">
-        Volltext:
+        ${this.localize("ui.panel.greenautarky_setup.analytics.policy_prefix")}
         <a
           href="https://greenautarky.com/datenschutz"
           target="_blank"
           rel="noopener"
-          >GreenAutarky Datenschutzerklärung</a
-        >. Sie können diese Einstellungen jederzeit unter
-        <em>Einstellungen → Privatsphäre</em> ändern.
+          >${this.localize(
+            "ui.panel.greenautarky_setup.analytics.policy_link"
+          )}</a
+        >.
+        ${this.localize("ui.panel.greenautarky_setup.analytics.policy_suffix", {
+          path: this.localize(
+            "ui.panel.greenautarky_setup.analytics.policy_settings_path"
+          ),
+        })}
       </p>
 
       <div class="footer">
         ${this.canBack
           ? html`<ha-button class="back" @click=${this._back}
-              >Zurück</ha-button
+              >${this.localize(
+                "ui.panel.greenautarky_setup.common.back"
+              )}</ha-button
             >`
           : html`<span></span>`}
-        <ha-button @click=${this._save}>Fertig</ha-button>
+        <ha-button @click=${this._save}
+          >${this.localize(
+            "ui.panel.greenautarky_setup.analytics.done"
+          )}</ha-button
+        >
       </div>
     `;
   }

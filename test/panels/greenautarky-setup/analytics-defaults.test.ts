@@ -1,6 +1,10 @@
 import { describe, it, expect } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
+// FIX 1: user-facing tier text now lives in the bundled translation tables, so
+// text assertions read the LIVE German table; structural assertions (defaults,
+// section markup, no-toggle-in-tier-0) still read the component source.
+import { messages as de } from "../../../src/panels/greenautarky-setup/translations/de";
 
 /**
  * Tier-model regression tests for the ga-setup-analytics consent panel.
@@ -38,13 +42,19 @@ describe("ga-setup-analytics privacy tier defaults", () => {
 
   it("UI text cites the DSGVO legal basis per tier", () => {
     // Tier 1 → Art. 6 (f) — berechtigtes Interesse
-    expect(ANALYTICS_SOURCE).toMatch(/Art\.?\s*6.*\(?f\)?/i);
+    expect(
+      de["ui.panel.greenautarky_setup.analytics.tier1_legal"]
+    ).toMatch(/Art\.?\s*6.*\(?f\)?|lit\.\s*f/i);
     // Tier 2 → Art. 6 (a) — Einwilligung
-    expect(ANALYTICS_SOURCE).toMatch(/Art\.?\s*6.*\(?a\)?/i);
+    expect(
+      de["ui.panel.greenautarky_setup.analytics.tier2_legal"]
+    ).toMatch(/Art\.?\s*6.*\(?a\)?|lit\.\s*a/i);
   });
 
   it("Tier 1 toggle is labeled 'recommended' to encourage opt-in default", () => {
-    expect(ANALYTICS_SOURCE.toLowerCase()).toContain("empfohlen");
+    expect(
+      de["ui.panel.greenautarky_setup.analytics.tier1_title"].toLowerCase()
+    ).toContain("empfohlen");
   });
 
   it("Stale-consent banner is wired up (Phase E)", () => {
@@ -60,42 +70,51 @@ describe("ga-setup-analytics privacy tier defaults", () => {
   // ---------------------------------------------------------------------
 
   it("Tier 0 has an info-only section without a toggle (Phase F)", () => {
-    // Tier 0 must appear in the markup as a labeled section, with an
-    // explicit always-on indicator and NO ha-switch nested inside it.
+    // Structure lives in the source: a labeled tier-0 section with NO ha-switch.
     expect(ANALYTICS_SOURCE).toMatch(/class="tier tier-0"/);
-    expect(ANALYTICS_SOURCE).toMatch(/Betriebsnotwendige\s+Daten/);
-    expect(ANALYTICS_SOURCE).toMatch(/immer\s+aktiv/);
-    // Capture the tier-0 section and confirm no ha-switch in it.
     const tier0Match = ANALYTICS_SOURCE.match(
       /<section class="tier tier-0">([\s\S]*?)<\/section>/
     );
     expect(tier0Match, "tier-0 section must exist").not.toBeNull();
     expect(tier0Match![1]).not.toContain("ha-switch");
+    // Its label + always-on badge text live in the translation table.
+    expect(de["ui.panel.greenautarky_setup.analytics.tier0_title"]).toMatch(
+      /Betriebsnotwendige\s+Daten/
+    );
+    expect(de["ui.panel.greenautarky_setup.analytics.tier0_badge"]).toMatch(
+      /immer\s+aktiv/
+    );
   });
 
   it("Tier 0 cites Art. 6 (b) Vertragserfüllung as the legal basis (Phase F)", () => {
-    const tier0Match = ANALYTICS_SOURCE.match(
-      /<section class="tier tier-0">([\s\S]*?)<\/section>/
-    );
-    expect(tier0Match![1]).toMatch(/Art\.?\s*6.*\(?b\)?/i);
-    expect(tier0Match![1].toLowerCase()).toContain("vertragserf");
+    const legal = de["ui.panel.greenautarky_setup.analytics.tier0_legal"];
+    expect(legal).toMatch(/Art\.?\s*6.*\(?b\)?|lit\.\s*b/i);
+    expect(legal.toLowerCase()).toContain("vertragserf");
   });
 
   it("Each tier section has a 'Mehr erfahren' expandable detail (Phase F)", () => {
-    // Three <details> blocks — one per tier — each with example data.
+    // Three <details> blocks — one per tier — in the source markup.
     const detailsBlocks = ANALYTICS_SOURCE.match(
       /<details>[\s\S]*?<\/details>/g
     );
     expect(detailsBlocks).not.toBeNull();
     expect(detailsBlocks!.length).toBeGreaterThanOrEqual(3);
+    // Each renders the shared "more" disclosure label from the table.
     for (const block of detailsBlocks!) {
-      expect(block).toContain("Mehr erfahren");
+      expect(block).toContain(
+        "ui.panel.greenautarky_setup.analytics.more"
+      );
     }
+    expect(de["ui.panel.greenautarky_setup.analytics.more"]).toBe(
+      "Mehr erfahren"
+    );
   });
 
   it("Tier 2 label rebranded to 'Detaillierte Leistungsdaten' (Phase F)", () => {
     // Acceptance criterion: the Tier 2 heading is the plain-language label.
-    expect(ANALYTICS_SOURCE).toMatch(/Detaillierte\s+Leistungsdaten/);
+    expect(de["ui.panel.greenautarky_setup.analytics.tier2_title"]).toMatch(
+      /Detaillierte\s+Leistungsdaten/
+    );
   });
 
   it("Footer carries a link to the full versioned privacy policy (Phase F)", () => {
