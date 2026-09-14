@@ -14,6 +14,9 @@ import { gaLogoIcon } from "../../onboarding/ga-branding";
 class GaSetupEthernet extends LitElement {
   @property({ attribute: false }) public localize!: LocalizeFunc;
 
+  /** Whether the panel has a previous step to return to. */
+  @property({ type: Boolean }) public canBack = false;
+
   @state() private _enableEthernet = false;
 
   protected render(): TemplateResult {
@@ -44,9 +47,18 @@ class GaSetupEthernet extends LitElement {
       </ha-settings-row>
 
       <div class="footer">
+        ${this.canBack
+          ? html`<ha-button class="back" @click=${this._back}
+              >Zurück</ha-button
+            >`
+          : html`<span></span>`}
         <ha-button @click=${this._save}> Weiter </ha-button>
       </div>
     `;
+  }
+
+  private _back(): void {
+    fireEvent(this, "ga-setup-back");
   }
 
   protected firstUpdated(changedProps: PropertyValues) {
@@ -102,6 +114,12 @@ class GaSetupEthernet extends LitElement {
         }
         ha-settings-row {
           padding: 0;
+        }
+        .footer {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 8px;
         }
       `,
     ];

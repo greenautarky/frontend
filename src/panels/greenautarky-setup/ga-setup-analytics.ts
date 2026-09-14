@@ -21,6 +21,9 @@ class GaSetupAnalytics extends LitElement {
 
   @property({ attribute: false }) public localize!: LocalizeFunc;
 
+  /** Whether the panel has a previous step to return to. */
+  @property({ type: Boolean }) public canBack = false;
+
   // Privacy Tier defaults — see ga-ihost-docs/PRIVACY_TIERS.md.
   // Tier 1 (Fehlerberichte / berechtigtes Interesse, Art. 6 (f) DSGVO):
   //   default ON, operator can opt out anytime.
@@ -182,9 +185,18 @@ class GaSetupAnalytics extends LitElement {
       </p>
 
       <div class="footer">
+        ${this.canBack
+          ? html`<ha-button class="back" @click=${this._back}
+              >Zurück</ha-button
+            >`
+          : html`<span></span>`}
         <ha-button @click=${this._save}>Fertig</ha-button>
       </div>
     `;
+  }
+
+  private _back(): void {
+    fireEvent(this, "ga-setup-back");
   }
 
   protected firstUpdated(changedProps: PropertyValues) {
@@ -341,6 +353,12 @@ class GaSetupAnalytics extends LitElement {
         }
         .policy-link a {
           color: var(--primary-color, #03a9f4);
+        }
+        .footer {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 8px;
         }
       `,
     ];

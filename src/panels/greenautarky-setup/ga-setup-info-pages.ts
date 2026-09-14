@@ -12,6 +12,9 @@ import "../../onboarding/custom-pages/page-info";
 class GaSetupInfoPages extends LitElement {
   @property({ attribute: false }) public localize!: LocalizeFunc;
 
+  /** Whether the panel has a previous step to return to. */
+  @property({ type: Boolean }) public canBack = false;
+
   protected render(): TemplateResult {
     return html`
       <h1 class="ga-header">Ihr KI-Butler</h1>
@@ -21,6 +24,11 @@ class GaSetupInfoPages extends LitElement {
       </div>
 
       <div class="footer">
+        ${this.canBack
+          ? html`<ha-button class="back" @click=${this._back}
+              >Zurück</ha-button
+            >`
+          : html`<span></span>`}
         <ha-button unelevated @click=${this._finish}>Weiter</ha-button>
       </div>
     `;
@@ -30,6 +38,10 @@ class GaSetupInfoPages extends LitElement {
     fireEvent(this, "ga-setup-step", {
       type: "info_pages",
     });
+  }
+
+  private _back(): void {
+    fireEvent(this, "ga-setup-back");
   }
 
   static get styles(): CSSResultGroup {
@@ -42,7 +54,9 @@ class GaSetupInfoPages extends LitElement {
         }
         .footer {
           display: flex;
-          justify-content: flex-end;
+          justify-content: space-between;
+          align-items: center;
+          gap: 8px;
           margin-top: 24px;
         }
       `,

@@ -14,6 +14,10 @@ import { gaBrandingStyles, GA_PRODUCT_NAME } from "../../onboarding/ga-branding"
 class GaSetupGdpr extends LitElement {
   @property({ attribute: false }) public localize!: LocalizeFunc;
 
+  /** Whether the panel has a previous step to return to (drives the back
+   * button). The panel clears it when back would cross a gate. */
+  @property({ type: Boolean }) public canBack = false;
+
   @state() private _accepted = false;
 
   @state() private _error?: string;
@@ -62,6 +66,11 @@ class GaSetupGdpr extends LitElement {
       ${this._error ? html`<div class="error">${this._error}</div>` : ""}
 
       <div class="footer">
+        ${this.canBack
+          ? html`<ha-button class="back" @click=${this._back}
+              >Zurück</ha-button
+            >`
+          : html`<span></span>`}
         <ha-button
           unelevated
           @click=${this._continue}
@@ -71,6 +80,10 @@ class GaSetupGdpr extends LitElement {
         </ha-button>
       </div>
     `;
+  }
+
+  private _back(): void {
+    fireEvent(this, "ga-setup-back");
   }
 
   private _acceptChanged(ev: Event): void {
@@ -126,7 +139,10 @@ class GaSetupGdpr extends LitElement {
           margin-bottom: 16px;
         }
         .footer {
-          text-align: right;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 8px;
         }
       `,
     ];

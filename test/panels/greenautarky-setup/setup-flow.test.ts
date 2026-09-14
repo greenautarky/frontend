@@ -1,6 +1,16 @@
 import { describe, it, expect } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
+import {
+  STEP_ORDER,
+  STEPS_WITH_BACK,
+  advance,
+  goBack,
+  canGoBack,
+  backAvailableFor,
+  progressFor,
+  type NavState,
+} from "../../../src/panels/greenautarky-setup/setup-flow";
 
 /**
  * Tests for the greenautarky setup flow step ordering and logic.
@@ -318,5 +328,152 @@ describe("sub-user join flow (ADR-0006)", () => {
       "utf-8"
     );
     expect(src).toContain("/api/greenautarky_onboarding/sub_user/join");
+  });
+});
+
+// ===========================================================================
+// FIX 2 (Ahmad feedback) — a "Zurück" (back) step.
+//
+// These exercise the LIVE navigation reducer (src/.../setup-flow.ts) the panel
+// runs — not a re-declared copy — plus source checks that the panel and the
+// step components are actually wired to it.
+// ===========================================================================
+describe("FIX 2 — setup-flow back navigation (live reducer)", () => {
+  const start = (): NavState => ({ current: "welcome", history: [] });
+
+  it("STEP_ORDER is the full 7-step flow", () => {
+    expect(STEP_ORDER).toEqual([
+      "welcome",
+      "pin",
+      "gdpr",
+      "user",
+      "info_pages",
+      "analytics",
+      "ethernet",
+    ]);
+  });
+
+  it("analytics → back → info_pages", () => {
+    let s = start();
+    s = advance(s, "gdpr"); // no-PIN path: welcome → gdpr
+    s = advance(s, "user");
+    s = advance(s, "info_pages"); // account gate clears history
+    s = advance(s, "analytics");
+    expect(canGoBack(s)).toBe(true);
+    s = goBack(s);
+    expect(s.current).toBe("info_pages");
+  });
+
+  it("ethernet → back → analytics", () => {
+    let s = start();
+    s = advance(s, "gdpr");
+    s = advance(s, "user");
+    s = advance(s, "info_pages");
+    s = advance(s, "analytics");
+    s = advance(s, "ethernet");
+    s = goBack(s);
+    expect(s.current).toBe("analytics");
+  });
+
+  it("gdpr → back → welcome when no PIN was required", () => {
+    let s = start();
+    s = advance(s, "gdpr"); // welcome → gdpr
+    expect(backAvailableFor(s)).toBe(true);
+    s = goBack(s);
+    expect(s.current).toBe("welcome");
+  });
+
+  it("gdpr → back → pin when a PIN was set", () => {
+    let s = start();
+    s = advance(s, "pin"); // welcome → pin
+    s = advance(s, "gdpr"); // pin → gdpr
+    s = goBack(s);
+    expect(s.current).toBe("pin");
+  });
+
+  it("no back across the PIN gate (pin step has no back button)", () => {
+    const s: NavState = { current: "pin", history: ["welcome"] };
+    expect(STEPS_WITH_BACK).not.toContain("pin");
+    expect(backAvailableFor(s)).toBe(false);
+  });
+
+  it("user step offers no back — a second run would create a second account", () => {
+    const onUser: NavState = { current: "user", history: ["welcome", "gdpr"] };
+    expect(STEPS_WITH_BACK).not.toContain("user");
+    expect(backAvailableFor(onUser)).toBe(false);
+
+    // Once past the account gate, history is cleared so back can never return
+    // into create-user.
+    const afterGate = advance(onUser, "info_pages");
+    expect(afterGate.history).toEqual([]);
+    expect(canGoBack(afterGate)).toBe(false);
+    expect(backAvailableFor(afterGate)).toBe(false);
+    expect(goBack(afterGate).current).toBe("info_pages"); // no-op, not "user"
+  });
+
+  it("popstate and the on-page button drive the SAME transition (one reducer)", () => {
+    const s: NavState = { current: "analytics", history: ["info_pages"] };
+    const viaButton = goBack(s);
+    const viaPopstate = goBack(s);
+    expect(viaPopstate).toEqual(viaButton);
+    expect(viaButton.current).toBe("info_pages");
+  });
+
+  it("progressFor tracks the completed step in the 7-step flow", () => {
+    expect(progressFor("welcome")).toBeCloseTo(1 / 7);
+    expect(progressFor("analytics")).toBeCloseTo(6 / 7);
+    expect(progressFor("ethernet")).toBeCloseTo(1);
+  });
+});
+
+describe("FIX 2 — panel & steps are wired to setup-flow (live source)", () => {
+  const PANEL_DIR = path.resolve(
+    __dirname,
+    "../../../src/panels/greenautarky-setup"
+  );
+  const read = (f: string) =>
+    fs.readFileSync(path.join(PANEL_DIR, f), "utf-8");
+  const panel = read("ha-panel-greenautarky-setup.ts");
+
+  it("panel drives navigation through the shared setup-flow module", () => {
+    expect(panel).toMatch(/from ["']\.\/setup-flow["']/);
+    expect(panel).toContain("advance");
+    expect(panel).toContain("goBack");
+  });
+
+  it("panel listens for the ga-setup-back event", () => {
+    expect(panel).toMatch(/addEventListener\(\s*["']ga-setup-back["']/);
+  });
+
+  it("browser Back is wired: history.pushState per step + popstate handler", () => {
+    expect(panel).toContain("history.pushState");
+    expect(panel).toMatch(/addEventListener\(\s*["']popstate["']/);
+  });
+
+  it("panel passes canBack to the back-capable steps", () => {
+    expect(panel).toContain(".canBack");
+  });
+
+  it("exactly the back-capable steps fire ga-setup-back; the gated ones do not", () => {
+    for (const f of [
+      "ga-setup-gdpr.ts",
+      "ga-setup-info-pages.ts",
+      "ga-setup-analytics.ts",
+      "ga-setup-ethernet.ts",
+    ]) {
+      expect(read(f), `${f} must fire ga-setup-back`).toContain(
+        "ga-setup-back"
+      );
+    }
+    // welcome (nothing before), pin (PIN gate), user (account gate) must NOT.
+    for (const f of [
+      "ga-setup-welcome.ts",
+      "ga-setup-pin.ts",
+      "ga-setup-create-user.ts",
+    ]) {
+      expect(read(f), `${f} must NOT offer back`).not.toContain(
+        "ga-setup-back"
+      );
+    }
   });
 });

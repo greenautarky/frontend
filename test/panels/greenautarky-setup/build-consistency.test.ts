@@ -89,7 +89,31 @@ describe("greenautarky-setup panel requirements", () => {
     expect(panel).toContain("./ga-setup-analytics");
   });
 
-  it("panel defines all 5 steps including user creation", () => {
+  it("STEP_ORDER (setup-flow.ts) defines the full step flow", () => {
+    // The canonical step order lives in the shared setup-flow module (the
+    // panel imports it), so both the panel and the back-navigation reducer
+    // read one source of truth.
+    const flow = fs.readFileSync(
+      path.join(ROOT, "src/panels/greenautarky-setup/setup-flow.ts"),
+      "utf-8"
+    );
+    const stepsMatch = flow.match(/const STEP_ORDER[^=]*=\s*\[([\s\S]*?)\]/);
+    expect(stepsMatch).not.toBeNull();
+    const stepsContent = stepsMatch![1];
+    for (const step of [
+      "welcome",
+      "pin",
+      "gdpr",
+      "user",
+      "info_pages",
+      "analytics",
+      "ethernet",
+    ]) {
+      expect(stepsContent, `STEP_ORDER missing "${step}"`).toContain(
+        `"${step}"`
+      );
+    }
+    // The panel must consume the shared order, not re-declare its own.
     const panel = fs.readFileSync(
       path.join(
         ROOT,
@@ -97,15 +121,7 @@ describe("greenautarky-setup panel requirements", () => {
       ),
       "utf-8"
     );
-    // Extract STEPS array
-    const stepsMatch = panel.match(/const STEPS[^=]*=\s*\[([\s\S]*?)\]/);
-    expect(stepsMatch).not.toBeNull();
-    const stepsContent = stepsMatch![1];
-    expect(stepsContent).toContain('"welcome"');
-    expect(stepsContent).toContain('"gdpr"');
-    expect(stepsContent).toContain('"user"');
-    expect(stepsContent).toContain('"info_pages"');
-    expect(stepsContent).toContain('"analytics"');
+    expect(panel).toMatch(/from ["']\.\/setup-flow["']/);
   });
 
   it("user step calls createGASetupUser (not create_tenant)", () => {
