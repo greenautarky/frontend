@@ -285,3 +285,78 @@ describe("greenautarky-setup backend consistency (core repo)", () => {
     }
   );
 });
+
+// ---------------------------------------------------------------------------
+// FIX 3 (Ahmad feedback) — dark-mode readability of the consent panel.
+//
+// Every CSS custom property the wizard panels CONSUME via var(--x) must be
+// DEFINED in the theme (src/resources/theme/**) or the page template. An
+// undefined var silently falls back to its hardcoded literal — a LIGHT colour
+// — which then wins in the dark theme too, producing light-on-light text
+// (the "Betriebsnotwendige Daten" / tier-0 card was unreadable in dark mode
+// because it used var(--card-background-color-elevated, #fafafa), a variable
+// defined nowhere).
+//
+// This self-test reads the LIVE panel sources, the LIVE theme files and the
+// LIVE template on every run — never a re-declared copy — so it cannot rot
+// into agreement with a broken panel.
+// ---------------------------------------------------------------------------
+describe("greenautarky-setup CSS variables are themeable (dark-mode safe)", () => {
+  const PANEL_DIR = path.join(ROOT, "src/panels/greenautarky-setup");
+  const THEME_DIR = path.join(ROOT, "src/resources/theme");
+  const TEMPLATE = path.join(ROOT, "src/html/greenautarky-setup.html.template");
+
+  const readAllFiles = (dir: string): string => {
+    let out = "";
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        out += readAllFiles(full);
+      } else if (entry.isFile()) {
+        out += fs.readFileSync(full, "utf-8") + "\n";
+      }
+    }
+    return out;
+  };
+
+  const panelFiles = fs
+    .readdirSync(PANEL_DIR)
+    .filter((f) => f.endsWith(".ts"));
+  const panelSource = panelFiles
+    .map((f) => fs.readFileSync(path.join(PANEL_DIR, f), "utf-8"))
+    .join("\n");
+  // "defined" = anything the running theme or the served page provides.
+  const definitionSource =
+    readAllFiles(THEME_DIR) + "\n" + fs.readFileSync(TEMPLATE, "utf-8");
+
+  const usedVars = new Set<string>();
+  for (const m of panelSource.matchAll(/var\(\s*(--[a-zA-Z0-9-]+)/g)) {
+    usedVars.add(m[1]);
+  }
+
+  const definedVars = new Set<string>();
+  for (const m of definitionSource.matchAll(/(--[a-zA-Z0-9-]+)\s*:/g)) {
+    definedVars.add(m[1]);
+  }
+
+  it("extracts CSS variables from the LIVE sources (coverage guard)", () => {
+    // A tool that inspects zero items is a failure, not a pass. If the file
+    // layout or the extraction regex drifts, FAIL loudly rather than green.
+    expect(panelFiles.length, "no panel .ts files found").toBeGreaterThan(0);
+    expect(usedVars.size, "no var(--x) usages extracted").toBeGreaterThan(0);
+    expect(
+      definedVars.size,
+      "no --x: definitions extracted from theme/template"
+    ).toBeGreaterThan(0);
+  });
+
+  it("every var() consumed by the wizard panels is defined in theme or template", () => {
+    const undefinedVars = [...usedVars].filter((v) => !definedVars.has(v));
+    expect(
+      undefinedVars,
+      `Undefined CSS custom properties (their light fallback wins in dark mode → unreadable): ${undefinedVars.join(
+        ", "
+      )}`
+    ).toEqual([]);
+  });
+});

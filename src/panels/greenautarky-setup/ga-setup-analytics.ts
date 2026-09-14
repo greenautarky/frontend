@@ -276,7 +276,12 @@ class GaSetupAnalytics extends LitElement {
           margin-bottom: 12px;
         }
         .tier-0 {
-          background: var(--card-background-color-elevated, #fafafa);
+          /* --secondary-background-color is defined in both the light and dark
+             HA themes (src/resources/theme/color) so the tier-0 card keeps a
+             readable contrast in dark mode. The previous
+             --card-background-color-elevated was defined nowhere, so its light
+             #fafafa fallback always won → light-on-light, unreadable (Ahmad). */
+          background: var(--secondary-background-color, #f5f5f5);
         }
         .tier header {
           display: flex;
