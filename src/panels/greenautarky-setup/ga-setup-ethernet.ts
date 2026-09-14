@@ -14,26 +14,31 @@ import { gaLogoIcon } from "../../onboarding/ga-branding";
 class GaSetupEthernet extends LitElement {
   @property({ attribute: false }) public localize!: LocalizeFunc;
 
+  /** Whether the panel has a previous step to return to. */
+  @property({ type: Boolean }) public canBack = false;
+
   @state() private _enableEthernet = false;
 
   protected render(): TemplateResult {
     return html`
       <div class="ga-header">
         ${gaLogoIcon}
-        <h1>Netzwerk-Einstellungen</h1>
+        <h1>${this.localize("ui.panel.greenautarky_setup.ethernet.header")}</h1>
       </div>
-      <p>
-        Ihr Ger&auml;t ist standardm&auml;&szlig;ig nur &uuml;ber WiFi und VPN
-        erreichbar. M&ouml;chten Sie auch die Ethernet-Verbindung aktivieren?
-      </p>
+      <p>${this.localize("ui.panel.greenautarky_setup.ethernet.intro")}</p>
       <div class="warning">
-        Hinweis: Ethernet erm&ouml;glicht den Zugriff &uuml;ber das lokale
-        Netzwerk.
+        ${this.localize("ui.panel.greenautarky_setup.ethernet.warning")}
       </div>
       <ha-settings-row>
-        <span slot="heading">Ethernet-Verbindung aktivieren</span>
+        <span slot="heading"
+          >${this.localize(
+            "ui.panel.greenautarky_setup.ethernet.toggle_heading"
+          )}</span
+        >
         <span slot="description">
-          Ger&auml;t &uuml;ber Ethernet im lokalen Netzwerk erreichbar machen
+          ${this.localize(
+            "ui.panel.greenautarky_setup.ethernet.toggle_description"
+          )}
         </span>
         <ha-switch
           .checked=${this._enableEthernet}
@@ -44,9 +49,22 @@ class GaSetupEthernet extends LitElement {
       </ha-settings-row>
 
       <div class="footer">
-        <ha-button @click=${this._save}> Weiter </ha-button>
+        ${this.canBack
+          ? html`<ha-button class="back" @click=${this._back}
+              >${this.localize(
+                "ui.panel.greenautarky_setup.common.back"
+              )}</ha-button
+            >`
+          : html`<span></span>`}
+        <ha-button @click=${this._save}>
+          ${this.localize("ui.panel.greenautarky_setup.common.next")}
+        </ha-button>
       </div>
     `;
+  }
+
+  private _back(): void {
+    fireEvent(this, "ga-setup-back");
   }
 
   protected firstUpdated(changedProps: PropertyValues) {
@@ -102,6 +120,12 @@ class GaSetupEthernet extends LitElement {
         }
         ha-settings-row {
           padding: 0;
+        }
+        .footer {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 8px;
         }
       `,
     ];

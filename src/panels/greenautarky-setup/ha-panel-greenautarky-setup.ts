@@ -1,6 +1,7 @@
 import "@material/mwc-linear-progress/mwc-linear-progress";
 import type { PropertyValues } from "lit";
 import { css, html, nothing } from "lit";
+import { cache } from "lit/directives/cache";
 import { customElement, property, state } from "lit/decorators";
 import type { Auth } from "home-assistant-js-websocket";
 import {
@@ -30,15 +31,9 @@ import "./ga-setup-create-user";
 import "./ga-setup-info-pages";
 import "./ga-setup-analytics";
 import "./ga-setup-ethernet";
-
-type GASetupStepType =
-  | "welcome"
-  | "pin"
-  | "gdpr"
-  | "user"
-  | "info_pages"
-  | "analytics"
-  | "ethernet";
+import { advance, canGoBack, goBack, progressFor } from "./setup-flow";
+import type { GASetupStepType } from "./setup-flow";
+import { buildGaLocalize, GA_SUPPORTED_LANGUAGES } from "./ga-localize";
 
 interface GASetupEvent {
   type: GASetupStepType;
@@ -47,23 +42,17 @@ interface GASetupEvent {
   pin?: string;
 }
 
-const STEPS: GASetupStepType[] = [
-  "welcome",
-  "pin",
-  "gdpr",
-  "user",
-  "info_pages",
-  "analytics",
-  "ethernet",
-];
-
 declare global {
   interface HASSDomEvents {
     "ga-setup-step": GASetupEvent;
+    // Fired by a step's "Zurück" button. No payload — the panel pops its own
+    // history stack (see setup-flow.ts) and never re-runs a step's side effects.
+    "ga-setup-back": undefined;
   }
 
   interface GlobalEventHandlersEventMap {
     "ga-setup-step": HASSDomEvent<GASetupEvent>;
+    "ga-setup-back": HASSDomEvent<undefined>;
   }
 }
 
@@ -71,10 +60,16 @@ declare global {
 class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
   @property({ attribute: false }) public hass?: HomeAssistant;
 
-  @property({ attribute: false }) public translationFragment =
-    "page-onboarding";
+  // NB: no translationFragment — the wizard does NOT fetch a runtime fragment
+  // (German is primary and self-contained). this.localize is built from the
+  // bundled de.ts/en.ts tables in _rebuildLocalize() below.
 
   @state() private _currentStep: GASetupStepType = "welcome";
+
+  /** Steps the user can return to (oldest first, excludes the current step).
+   * Managed via the pure reducer in setup-flow.ts. Cleared when crossing the
+   * account gate so "Zurück" can never return to create-user. */
+  @state() private _stepHistory: GASetupStepType[] = [];
 
   @state() private _loading = false;
 
@@ -110,11 +105,15 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
     return html`
       <mwc-linear-progress .progress=${this._progress}></mwc-linear-progress>
       <ha-card>
-        <div class="card-content">${this._renderStep()}</div>
+        <!-- cache() keeps each step's DOM (and its internal state — e.g. the
+             analytics consent toggles) alive when switched out, so pressing
+             "Zurück" and returning restores what the user had entered. -->
+        <div class="card-content">${cache(this._renderStep())}</div>
       </ha-card>
       <div class="footer">
         <ha-language-picker
           .value=${this.language}
+          .languages=${[...GA_SUPPORTED_LANGUAGES]}
           .label=${""}
           native-name
           @value-changed=${this._languageChanged}
@@ -142,11 +141,15 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
         ></ga-setup-welcome>`;
       case "pin":
         return html`<ga-setup-pin
+          .localize=${this.localize}
           .autoPin=${this._autoPin}
           .joinMode=${this._joinMode}
         ></ga-setup-pin>`;
       case "gdpr":
-        return html`<ga-setup-gdpr .localize=${this.localize}></ga-setup-gdpr>`;
+        return html`<ga-setup-gdpr
+          .localize=${this.localize}
+          .canBack=${this._stepHistory.length > 0}
+        ></ga-setup-gdpr>`;
       case "user":
         return html`<ga-setup-create-user
           .localize=${this.localize}
@@ -157,15 +160,18 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
       case "info_pages":
         return html`<ga-setup-info-pages
           .localize=${this.localize}
+          .canBack=${this._stepHistory.length > 0}
         ></ga-setup-info-pages>`;
       case "analytics":
         return html`<ga-setup-analytics
           .hass=${this.hass}
           .localize=${this.localize}
+          .canBack=${this._stepHistory.length > 0}
         ></ga-setup-analytics>`;
       case "ethernet":
         return html`<ga-setup-ethernet
           .localize=${this.localize}
+          .canBack=${this._stepHistory.length > 0}
         ></ga-setup-ethernet>`;
       default:
         return nothing;
@@ -179,7 +185,14 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
       this.language = "de";
       window.localStorage.setItem("selectedLanguage", JSON.stringify("de"));
     }
+    // Build localize() from the bundled de/en tables (no runtime fragment).
+    this._rebuildLocalize();
     this.addEventListener("ga-setup-step", (ev) => this._handleStep(ev));
+    // "Zurück" button (gdpr / info_pages / analytics / ethernet) and the
+    // browser Back button both route through the SAME reducer, so they produce
+    // identical transitions and never re-run a step's side effects.
+    this.addEventListener("ga-setup-back", this._goBack);
+    window.addEventListener("popstate", this._onPopState);
     import("../../components/ha-language-picker");
 
     // Sub-user join mode: same wizard, minimal flow. Start straight at the
@@ -224,6 +237,11 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
     }
   }
 
+  public disconnectedCallback(): void {
+    super.disconnectedCallback();
+    window.removeEventListener("popstate", this._onPopState);
+  }
+
   protected updated(changedProps: PropertyValues) {
     super.updated(changedProps);
     if (changedProps.has("language")) {
@@ -239,33 +257,31 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
 
   private async _handleStep(ev: HASSDomEvent<GASetupEvent>) {
     const { type, result } = ev.detail;
-    const currentIndex = STEPS.indexOf(type);
-    const stepProgress = (currentIndex + 1) / STEPS.length;
-    this._progress = stepProgress;
+    this._progress = progressFor(type);
 
     if (type === "welcome") {
       // Check if PIN step is needed
       try {
         const status = await fetchGASetupStatus();
         if (status.pin_required && !status.pin_verified) {
-          this._currentStep = "pin";
+          this._goForward("pin");
         } else {
-          this._currentStep = "gdpr";
+          this._goForward("gdpr");
         }
       } catch (_) {
         // If status check fails, skip PIN (backward compatible)
-        this._currentStep = "gdpr";
+        this._goForward("gdpr");
       }
     } else if (type === "pin") {
       this._autoPin = undefined;
       if (this._joinMode) {
         this._invitePin = ev.detail.pin;
-        this._currentStep = "user";
+        this._goForward("user");
       } else {
-        this._currentStep = "gdpr";
+        this._goForward("gdpr");
       }
     } else if (type === "gdpr") {
-      this._currentStep = "user";
+      this._goForward("user");
     } else if (type === "user") {
       // User was created — authenticate with the returned auth code
       this._loading = true;
@@ -284,17 +300,20 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
           document.location.assign("/");
           return;
         }
-        this._currentStep = "info_pages";
+        // Account gate: advance() clears the back history here, so a later
+        // "Zurück" (or the browser Back button) can never return to
+        // create-user and create a second account server-side.
+        this._goForward("info_pages");
       } catch (_err: any) {
-        alert("Etwas ist schiefgelaufen. Bitte versuche es erneut.");
+        alert(this.localize("ui.panel.greenautarky_setup.panel.error_retry"));
         location.reload();
       } finally {
         this._loading = false;
       }
     } else if (type === "info_pages") {
-      this._currentStep = "analytics";
+      this._goForward("analytics");
     } else if (type === "analytics") {
-      this._currentStep = "ethernet";
+      this._goForward("ethernet");
     } else if (type === "ethernet") {
       // All done — mark setup complete and redirect
       this._loading = true;
@@ -325,6 +344,49 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
     }
   }
 
+  /** Advance to `next`, recording history via the reducer, and push a browser
+   * history entry so the browser Back button maps to one wizard step. */
+  private _goForward(next: GASetupStepType) {
+    const nextState = advance(
+      { current: this._currentStep, history: this._stepHistory },
+      next
+    );
+    this._stepHistory = nextState.history;
+    this._currentStep = nextState.current;
+    try {
+      history.pushState({ gaStep: next }, "");
+    } catch (_) {
+      // history API not available
+    }
+  }
+
+  /** Go back one step (on-page "Zurück" button and browser Back both land here).
+   * Never re-runs a step's side effects — it only pops the reducer's history. */
+  private _goBack = () => {
+    const state = { current: this._currentStep, history: this._stepHistory };
+    if (!canGoBack(state)) {
+      return;
+    }
+    const prevState = goBack(state);
+    this._stepHistory = prevState.history;
+    this._currentStep = prevState.current;
+    this._progress = progressFor(prevState.current);
+  };
+
+  /** Browser Back button. Mirrors the on-page button, and traps the user in the
+   * wizard (re-pushes) when there is no wizard step left to go back to. */
+  private _onPopState = () => {
+    if (canGoBack({ current: this._currentStep, history: this._stepHistory })) {
+      this._goBack();
+    } else {
+      try {
+        history.pushState({ gaStep: this._currentStep }, "");
+      } catch (_) {
+        // history API not available
+      }
+    }
+  };
+
   private async _connectHass(auth: Auth) {
     const conn = await createConnection({ auth });
     await Promise.all([
@@ -346,9 +408,14 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
     });
   }
 
+  private async _rebuildLocalize() {
+    this.localize = await buildGaLocalize(this, this.language);
+  }
+
   private _languageChanged(ev: CustomEvent) {
     const language = ev.detail.value;
     this.language = language;
+    this._rebuildLocalize();
     if (this.hass) {
       this._updateHass({
         locale: { ...this.hass!.locale, language },

@@ -8,11 +8,18 @@ import "../../components/ha-checkbox";
 import "../../components/ha-formfield";
 import { acceptGASetupGDPR } from "../../data/greenautarky_setup";
 import { onBoardingStyles } from "../../onboarding/styles";
-import { gaBrandingStyles, GA_PRODUCT_NAME } from "../../onboarding/ga-branding";
+import {
+  gaBrandingStyles,
+  GA_PRODUCT_NAME,
+} from "../../onboarding/ga-branding";
 
 @customElement("ga-setup-gdpr")
 class GaSetupGdpr extends LitElement {
   @property({ attribute: false }) public localize!: LocalizeFunc;
+
+  /** Whether the panel has a previous step to return to (drives the back
+   * button). The panel clears it when back would cross a gate. */
+  @property({ type: Boolean }) public canBack = false;
 
   @state() private _accepted = false;
 
@@ -20,39 +27,50 @@ class GaSetupGdpr extends LitElement {
 
   protected render(): TemplateResult {
     return html`
-      <h1 class="ga-header">Datenschutz</h1>
+      <h1 class="ga-header">
+        ${this.localize("ui.panel.greenautarky_setup.gdpr.title")}
+      </h1>
       <p>
-        Bitte lesen Sie die
+        ${this.localize("ui.panel.greenautarky_setup.gdpr.intro_lead")}
         <a
           href="https://greenautarky.com/datenschutz"
           target="_blank"
           rel="noopener"
-          >Datenschutzerklärung</a
+          >${this.localize(
+            "ui.panel.greenautarky_setup.gdpr.privacy_policy"
+          )}</a
         >
-        für den ${GA_PRODUCT_NAME} und akzeptieren Sie sie, bevor Sie Ihr Konto
-        erstellen.
+        ${this.localize("ui.panel.greenautarky_setup.gdpr.intro_tail", {
+          product: GA_PRODUCT_NAME,
+        })}
       </p>
 
       <div class="gdpr-content">
-        <h2>Datenverarbeitung</h2>
+        <h2>
+          ${this.localize(
+            "ui.panel.greenautarky_setup.gdpr.processing_heading"
+          )}
+        </h2>
         <p>
-          Ihr ${GA_PRODUCT_NAME} verarbeitet Daten lokal auf Ihrem Gerät.
-          Persönliche Daten wie Ihr Benutzername und Ihre Konfiguration werden
-          ausschließlich auf diesem Gerät gespeichert und nicht an externe Server
-          übertragen, es sei denn, Sie aktivieren ausdrücklich Cloud-Dienste oder
-          Analysen.
+          ${this.localize("ui.panel.greenautarky_setup.gdpr.processing_body", {
+            product: GA_PRODUCT_NAME,
+          })}
         </p>
 
-        <h2>Ihre Rechte</h2>
+        <h2>
+          ${this.localize("ui.panel.greenautarky_setup.gdpr.rights_heading")}
+        </h2>
         <ul>
-          <li>Alle Daten werden lokal auf Ihrem Gerät gespeichert</li>
-          <li>Sie können Ihre Daten jederzeit exportieren oder löschen</li>
-          <li>Analysen und Diagnosen sind optional und standardmäßig deaktiviert</li>
-          <li>Drittanbieter-Integrationen teilen Daten nur bei ausdrücklicher Konfiguration</li>
+          <li>${this.localize("ui.panel.greenautarky_setup.gdpr.right_1")}</li>
+          <li>${this.localize("ui.panel.greenautarky_setup.gdpr.right_2")}</li>
+          <li>${this.localize("ui.panel.greenautarky_setup.gdpr.right_3")}</li>
+          <li>${this.localize("ui.panel.greenautarky_setup.gdpr.right_4")}</li>
         </ul>
       </div>
 
-      <ha-formfield .label=${"Ich akzeptiere die Datenschutzerklärung"}>
+      <ha-formfield
+        .label=${this.localize("ui.panel.greenautarky_setup.gdpr.accept_label")}
+      >
         <ha-checkbox
           @change=${this._acceptChanged}
           .checked=${this._accepted}
@@ -62,15 +80,26 @@ class GaSetupGdpr extends LitElement {
       ${this._error ? html`<div class="error">${this._error}</div>` : ""}
 
       <div class="footer">
+        ${this.canBack
+          ? html`<ha-button class="back" @click=${this._back}
+              >${this.localize(
+                "ui.panel.greenautarky_setup.common.back"
+              )}</ha-button
+            >`
+          : html`<span></span>`}
         <ha-button
           unelevated
           @click=${this._continue}
           .disabled=${!this._accepted}
         >
-          Weiter
+          ${this.localize("ui.panel.greenautarky_setup.common.next")}
         </ha-button>
       </div>
     `;
+  }
+
+  private _back(): void {
+    fireEvent(this, "ga-setup-back");
   }
 
   private _acceptChanged(ev: Event): void {
@@ -87,7 +116,9 @@ class GaSetupGdpr extends LitElement {
         type: "gdpr",
       });
     } catch (err: any) {
-      this._error = `Fehler: ${err.message}`;
+      this._error = this.localize("ui.panel.greenautarky_setup.gdpr.error", {
+        message: err.message,
+      });
     }
   }
 
@@ -126,7 +157,10 @@ class GaSetupGdpr extends LitElement {
           margin-bottom: 16px;
         }
         .footer {
-          text-align: right;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 8px;
         }
       `,
     ];

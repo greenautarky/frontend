@@ -78,5 +78,9 @@
         "./node_modules/@lit-labs/observers/resize-controller.js"
       ]
     }
-  }
+  },
+  // Playwright e2e specs (test/e2e/**/*.e2e.ts) import @playwright/test, which
+  // is not a dependency of this repo — they run on a served page / device, not
+  // in the unit type-check. Excluded so `tsc` (lint:types) stays green.
+  "exclude": ["test/e2e"]
 }

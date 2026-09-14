@@ -5,12 +5,7 @@ import type { LocalizeFunc } from "../../common/translations/localize";
 import { fireEvent } from "../../common/dom/fire_event";
 import "../../components/ha-button";
 import { onBoardingStyles } from "../../onboarding/styles";
-import {
-  gaLogoLockup,
-  gaBrandingStyles,
-  GA_WELCOME_HEADER,
-  GA_WELCOME_INTRO,
-} from "../../onboarding/ga-branding";
+import { gaLogoLockup, gaBrandingStyles } from "../../onboarding/ga-branding";
 
 @customElement("ga-setup-welcome")
 class GaSetupWelcome extends LitElement {
@@ -21,15 +16,17 @@ class GaSetupWelcome extends LitElement {
       <div class="brand-block">
         ${gaLogoLockup}
         <p class="brand-tagline">
-          <strong>GreenAutarky KI-Butler</strong>, powered by Home Assistant
+          ${this.localize("ui.panel.greenautarky_setup.welcome.tagline")}
         </p>
       </div>
 
-      <h1 class="ga-header">${GA_WELCOME_HEADER}</h1>
-      <p>${GA_WELCOME_INTRO}</p>
+      <h1 class="ga-header">
+        ${this.localize("ui.panel.greenautarky_setup.welcome.header")}
+      </h1>
+      <p>${this.localize("ui.panel.greenautarky_setup.welcome.intro")}</p>
 
       <ha-button @click=${this._start} class="start" unelevated>
-        Meinen KI-Butler einrichten
+        ${this.localize("ui.panel.greenautarky_setup.welcome.cta")}
       </ha-button>
     `;
   }

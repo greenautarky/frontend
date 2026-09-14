@@ -2,6 +2,7 @@ import type { CSSResultGroup, TemplateResult } from "lit";
 import { LitElement, css, html } from "lit";
 import { customElement, property, state } from "lit/decorators";
 import { fireEvent } from "../../common/dom/fire_event";
+import type { LocalizeFunc } from "../../common/translations/localize";
 import "../../components/ha-button";
 import "../../components/ha-textfield";
 import { onBoardingStyles } from "../../onboarding/styles";
@@ -9,6 +10,8 @@ import { verifyGASetupPin } from "../../data/greenautarky_setup";
 
 @customElement("ga-setup-pin")
 class GaSetupPin extends LitElement {
+  @property({ attribute: false }) public localize!: LocalizeFunc;
+
   /** PIN to auto-submit (from QR code URL parameter) */
   @property() autoPin?: string;
 
@@ -61,11 +64,15 @@ class GaSetupPin extends LitElement {
 
     return html`
       <div class="pin-icon">&#128274;</div>
-      <h1>${this.joinMode ? "Einladungs-PIN eingeben" : "Geräte-PIN eingeben"}</h1>
+      <h1>
+        ${this.joinMode
+          ? this.localize("ui.panel.greenautarky_setup.pin.title_invite")
+          : this.localize("ui.panel.greenautarky_setup.pin.title_device")}
+      </h1>
       <p class="description">
         ${this.joinMode
-          ? "Bitte gib den 6-stelligen Einladungs-PIN ein, den du erhalten hast."
-          : "Bitte geben Sie den 6-stelligen Code ein, der auf dem Aufkleber Ihres Geräts steht."}
+          ? this.localize("ui.panel.greenautarky_setup.pin.description_invite")
+          : this.localize("ui.panel.greenautarky_setup.pin.description_device")}
       </p>
 
       <div class="pin-input-container">
@@ -88,8 +95,10 @@ class GaSetupPin extends LitElement {
         ? html`<p class="error">
             ${this._error}
             ${this._countdown > 0
-              ? html`<br />Nächster Versuch in
-                  <strong>${this._countdown}s</strong>`
+              ? html`<br />${this.localize(
+                    "ui.panel.greenautarky_setup.pin.retry_after",
+                    { seconds: this._countdown }
+                  )}`
               : ""}
           </p>`
         : ""}
@@ -100,7 +109,9 @@ class GaSetupPin extends LitElement {
         unelevated
         ?disabled=${!canSubmit}
       >
-        ${this._loading ? "Wird geprüft..." : "Weiter"}
+        ${this._loading
+          ? this.localize("ui.panel.greenautarky_setup.pin.checking")
+          : this.localize("ui.panel.greenautarky_setup.common.next")}
       </ha-button>
     `;
   }
@@ -155,16 +166,22 @@ class GaSetupPin extends LitElement {
       }
 
       if (result.status === "locked") {
-        this._error = "Zu viele Fehlversuche.";
+        this._error = this.localize(
+          "ui.panel.greenautarky_setup.pin.error_locked"
+        );
         this._startCountdown(result.retry_after || 60);
       } else {
-        this._error = "Falscher Code. Bitte prüfen Sie den Aufkleber.";
+        this._error = this.localize(
+          "ui.panel.greenautarky_setup.pin.error_wrong"
+        );
         if (result.retry_after && result.retry_after > 0) {
           this._startCountdown(result.retry_after);
         }
       }
     } catch (_err) {
-      this._error = "Verbindungsfehler. Bitte erneut versuchen.";
+      this._error = this.localize(
+        "ui.panel.greenautarky_setup.pin.error_connection"
+      );
     } finally {
       this._loading = false;
       this._pin = "";
