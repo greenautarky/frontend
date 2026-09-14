@@ -587,7 +587,7 @@ All custom onboarding UI lives in `src/panels/greenautarky-setup/`:
 
 Supporting files:
 
-- `src/data/greenautarky_setup.ts` — API calls to backend (`/api/greenautarky_onboarding/*`)
+- `src/data/greenautarky_setup.ts` — API calls to backend (`/api/greenautarky_site/*`, built from `src/data/greenautarky_paths.ts` — never hardcode the prefix)
 - `src/data/greenautarky_telemetry.ts` — Telemetry WebSocket API calls
 - `src/onboarding/ga-branding.ts` — Shared logos, colors, text constants
 - `src/entrypoints/greenautarky-setup.ts` — Webpack entrypoint
@@ -670,7 +670,7 @@ Resets GA onboarding state, runs the full wizard, verifies completion.
 
 ### QA reset endpoint
 
-`POST /api/greenautarky_onboarding/reset` (admin auth required) resets the
+`POST /api/greenautarky_site/reset` (admin auth required) resets the
 GA onboarding wizard state so it can be re-run on a provisioned device without
 reflashing. Used by both the Playwright e2e tests and the ga-flasher stage 90.
 
@@ -681,7 +681,7 @@ TOKEN=$(curl -sf -X POST http://device:8123/auth/token \
   | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
 
 # Reset
-curl -X POST http://device:8123/api/greenautarky_onboarding/reset \
+curl -X POST http://device:8123/api/greenautarky_site/reset \
   -H "Authorization: Bearer $TOKEN"
 ```
 

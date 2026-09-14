@@ -1,3 +1,4 @@
+import { GA_API_BASE } from "./greenautarky_paths";
 import { handleFetchPromise } from "../util/hass-call-api";
 
 export interface GASetupStatus {
@@ -22,14 +23,14 @@ export interface GASetupUserResponse {
 
 export const fetchGASetupStatus = (): Promise<GASetupStatus> =>
   handleFetchPromise<GASetupStatus>(
-    fetch("/api/greenautarky_onboarding/status", {
+    fetch(`${GA_API_BASE}/status`, {
       credentials: "same-origin",
     })
   );
 
 export const acceptGASetupGDPR = (): Promise<{ status: string }> =>
   handleFetchPromise<{ status: string }>(
-    fetch("/api/greenautarky_onboarding/gdpr", {
+    fetch(`${GA_API_BASE}/gdpr`, {
       method: "POST",
       credentials: "same-origin",
       body: JSON.stringify({ accepted: true }),
@@ -44,7 +45,7 @@ export const createGASetupUser = (params: {
   language: string;
 }): Promise<GASetupUserResponse> =>
   handleFetchPromise<GASetupUserResponse>(
-    fetch("/api/greenautarky_onboarding/create_user", {
+    fetch(`${GA_API_BASE}/create_user`, {
       method: "POST",
       credentials: "same-origin",
       body: JSON.stringify(params),
@@ -66,7 +67,7 @@ export const joinGASubUser = (params: {
   datenschutz_consent: boolean;
 }): Promise<GASubUserJoinResponse> =>
   handleFetchPromise<GASubUserJoinResponse>(
-    fetch("/api/greenautarky_onboarding/sub_user/join", {
+    fetch(`${GA_API_BASE}/sub_user/join`, {
       method: "POST",
       credentials: "same-origin",
       body: JSON.stringify(params),
@@ -74,7 +75,7 @@ export const joinGASubUser = (params: {
   );
 
 export const verifyGASetupPin = (pin: string): Promise<GAPinResponse> =>
-  fetch("/api/greenautarky_onboarding/verify_pin", {
+  fetch(`${GA_API_BASE}/verify_pin`, {
     method: "POST",
     credentials: "same-origin",
     headers: { "Content-Type": "application/json" },
@@ -84,7 +85,7 @@ export const verifyGASetupPin = (pin: string): Promise<GAPinResponse> =>
 export const setEthernetPreference = (
   enable: boolean
 ): Promise<{ status: string }> =>
-  fetch("/api/greenautarky_onboarding/ethernet", {
+  fetch(`${GA_API_BASE}/ethernet`, {
     method: "POST",
     credentials: "same-origin",
     headers: { "Content-Type": "application/json" },
@@ -93,7 +94,7 @@ export const setEthernetPreference = (
 
 export const completeGASetup = (): Promise<void> =>
   handleFetchPromise<void>(
-    fetch("/api/greenautarky_onboarding/complete", {
+    fetch(`${GA_API_BASE}/complete`, {
       method: "POST",
       credentials: "same-origin",
     })

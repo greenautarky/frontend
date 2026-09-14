@@ -138,7 +138,7 @@ describe("greenautarky-setup panel requirements", () => {
       path.join(ROOT, "src/data/greenautarky_setup.ts"),
       "utf-8"
     );
-    expect(api).toContain("/api/greenautarky_onboarding/create_user");
+    expect(api).toContain("${GA_API_BASE}/create_user");
     expect(api).not.toContain("create_tenant");
   });
 
@@ -210,7 +210,7 @@ describe("authorize.ts app-flow integration", () => {
       path.join(ROOT, "src/entrypoints/authorize.ts"),
       "utf-8"
     );
-    expect(source).toContain("greenautarky_onboarding/status");
+    expect(source).toContain("${GA_API_BASE}/status");
     expect(source).toContain("ga_auth_redirect");
     expect(source).toContain("ga_bypass");
   });

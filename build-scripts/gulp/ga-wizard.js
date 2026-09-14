@@ -8,17 +8,18 @@
 // inputs).
 //
 // This task builds ONLY the greenautarky-setup entry as its own compilation
-// with the publicPath moved to the onboarding component's static mount
-// (/greenautarky_onboarding_static/...). The compilation's output dirs then
-// contain exactly the wizard's chunk set — vendoring the WHOLE dirs is
-// complete by construction, and the URLs can never collide with the stock
-// Core's /frontend_latest again.
+// with the publicPath moved to the component's static mount (GA_STATIC_ROOT,
+// derived below). The compilation's output dirs then contain exactly the
+// wizard's chunk set — vendoring the WHOLE dirs is complete by construction,
+// and the URLs can never collide with the stock Core's /frontend_latest
+// again.
 //
 // (A LimitChunkCountPlugin single-chunk variant was tried first and
 // OOM-killed 7-16 GB hosts — merging the wizard graph into one chunk is a
 // memory bomb. Keeping normal code-splitting has the same completeness
 // guarantee at the app build's proven memory profile.)
 
+import { createRequire } from "node:module";
 import gulp from "gulp";
 import rspack from "@rspack/core";
 import env from "../env.cjs";
@@ -30,8 +31,19 @@ import "./gen-icons-json.js";
 import "./locale-data.js";
 import "./translations.js";
 
-// The component's aiohttp static mount (see onboarding __init__.URL_BASE).
-const GA_STATIC_ROOT = "/greenautarky_onboarding_static";
+// The component's aiohttp static mount — this MUST equal the URL_BASE the
+// greenautarky_site integration serves the vendored bundle from, or every
+// chunk the wizard entry pulls 404s and the panel renders a blank page.
+//
+// Derived from the same one definition the app reads (src/data/
+// greenautarky_paths.ts), so the build and the runtime cannot disagree and a
+// rename cannot half-land. Plain Node here — no TS transpile — hence the
+// .json rather than an import of the .ts module.
+// Guarded by test/panels/greenautarky-setup/path-prefix-consistency.test.ts.
+const { domain: GA_DOMAIN } = createRequire(import.meta.url)(
+  "../../src/data/greenautarky_domain.json"
+);
+const GA_STATIC_ROOT = `/${GA_DOMAIN}_static`;
 
 const wizardConfig = (params) => {
   const conf = createAppConfig(params);
