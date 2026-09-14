@@ -1,111 +1,146 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { GA_API_BASE } from "../../src/data/greenautarky_paths";
+import {
+  fetchGASetupStatus,
+  acceptGASetupGDPR,
+  createGASetupUser,
+  joinGASubUser,
+  verifyGASetupPin,
+  setEthernetPreference,
+  completeGASetup,
+} from "../../src/data/greenautarky_setup";
 
 /**
- * Tests for the greenautarky setup API layer.
- * Verifies that API URLs and request shapes match the backend contract.
+ * Contract between the wizard and the greenautarky_site integration.
+ *
+ * These drive the REAL exported functions with `fetch` mocked at the network
+ * boundary, and assert on the URL each one actually requests. The previous
+ * version of this file declared its own table of endpoint strings and checked
+ * THAT — so it stayed green through a rename the shipped code had not made,
+ * which is precisely the drift it existed to catch. Never assert against a
+ * copy of the thing under test.
  */
 
-// The backend endpoints that the frontend must call
-const BACKEND_ENDPOINTS = {
-  status: { method: "GET", url: "/api/greenautarky_onboarding/status" },
-  gdpr: { method: "POST", url: "/api/greenautarky_onboarding/gdpr" },
-  createUser: {
-    method: "POST",
-    url: "/api/greenautarky_onboarding/create_user",
-  },
-  telemetry: {
-    method: "POST",
-    url: "/api/greenautarky_onboarding/telemetry",
-  },
-  complete: { method: "POST", url: "/api/greenautarky_onboarding/complete" },
-  consentStatus: {
-    method: "GET",
-    url: "/api/greenautarky_onboarding/consent/status",
-  },
-  consentAccept: {
-    method: "POST",
-    url: "/api/greenautarky_onboarding/consent/accept",
-  },
+interface Call {
+  url: string;
+  method: string;
+}
+
+let calls: Call[];
+
+const jsonResponse = () =>
+  new Response(JSON.stringify({ status: "ok" }), {
+    status: 200,
+    headers: { "content-type": "application/json" },
+  });
+
+beforeEach(() => {
+  calls = [];
+  vi.stubGlobal(
+    "fetch",
+    vi.fn((url: string, init?: RequestInit) => {
+      calls.push({ url: String(url), method: init?.method ?? "GET" });
+      return Promise.resolve(jsonResponse());
+    })
+  );
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+const USER_PARAMS = {
+  client_id: "http://localhost:8123/",
+  name: "Test User",
+  username: "testuser",
+  password: "SecurePass1!",
+  language: "de",
 };
 
+const JOIN_PARAMS = {
+  client_id: "http://localhost:8123/",
+  name: "Sub User",
+  password: "SecurePass1!",
+  invite_pin: "123456",
+  datenschutz_consent: true,
+};
+
+// [label, invocation, expected endpoint below GA_API_BASE, expected method]
+const CASES: [string, () => Promise<unknown>, string, string][] = [
+  ["status", () => fetchGASetupStatus(), "/status", "GET"],
+  ["gdpr", () => acceptGASetupGDPR(), "/gdpr", "POST"],
+  ["create_user", () => createGASetupUser(USER_PARAMS), "/create_user", "POST"],
+  ["sub_user/join", () => joinGASubUser(JOIN_PARAMS), "/sub_user/join", "POST"],
+  ["verify_pin", () => verifyGASetupPin("123456"), "/verify_pin", "POST"],
+  ["ethernet", () => setEthernetPreference(true), "/ethernet", "POST"],
+  ["complete", () => completeGASetup(), "/complete", "POST"],
+];
+
 describe("greenautarky setup API contract", () => {
-  it("all endpoints use the greenautarky_onboarding prefix", () => {
-    for (const [, endpoint] of Object.entries(BACKEND_ENDPOINTS)) {
-      expect(endpoint.url).toMatch(/^\/api\/greenautarky_onboarding\//);
+  it.each(CASES)(
+    "%s requests the endpoint under the shared API base",
+    async (_label, invoke, endpoint, method) => {
+      await invoke();
+      expect(calls).toHaveLength(1);
+      expect(calls[0].url).toBe(`${GA_API_BASE}${endpoint}`);
+      expect(calls[0].method).toBe(method);
     }
-  });
+  );
 
-  it("status endpoint is GET", () => {
-    expect(BACKEND_ENDPOINTS.status.method).toBe("GET");
-  });
-
-  it("mutation endpoints are POST", () => {
-    expect(BACKEND_ENDPOINTS.gdpr.method).toBe("POST");
-    expect(BACKEND_ENDPOINTS.createUser.method).toBe("POST");
-    expect(BACKEND_ENDPOINTS.telemetry.method).toBe("POST");
-    expect(BACKEND_ENDPOINTS.complete.method).toBe("POST");
-    expect(BACKEND_ENDPOINTS.consentAccept.method).toBe("POST");
-  });
-
-  it("consent status endpoint is GET", () => {
-    expect(BACKEND_ENDPOINTS.consentStatus.method).toBe("GET");
-  });
-
-  it("consent endpoints use the consent sub-path", () => {
-    expect(BACKEND_ENDPOINTS.consentStatus.url).toContain("/consent/");
-    expect(BACKEND_ENDPOINTS.consentAccept.url).toContain("/consent/");
+  it("every endpoint the wizard calls sits under one API base", async () => {
+    for (const [, invoke] of CASES) {
+      // eslint-disable-next-line no-await-in-loop
+      await invoke();
+    }
+    // A sweep over an empty set is a failure, not a pass.
+    expect(calls.length, "no fetch calls were captured").toBe(CASES.length);
+    const strays = calls
+      .map((c) => c.url)
+      .filter((u) => !u.startsWith(`${GA_API_BASE}/`));
+    expect(
+      strays,
+      `every GA endpoint must hang off ${GA_API_BASE}; strays: ${strays.join(
+        ", "
+      )}`
+    ).toEqual([]);
   });
 });
 
 describe("create_user request shape", () => {
-  it("requires client_id, name, username, password, language", () => {
-    const validRequest = {
-      client_id: "http://localhost:8123/",
-      name: "Test User",
-      username: "testuser",
-      password: "SecurePass1!",
-      language: "de",
-    };
-
-    // All required fields present
-    expect(validRequest.client_id).toBeTruthy();
-    expect(validRequest.name).toBeTruthy();
-    expect(validRequest.username).toBeTruthy();
-    expect(validRequest.password).toBeTruthy();
-    expect(validRequest.language).toBeTruthy();
-  });
-
-  it("response must include auth_code", () => {
-    const validResponse = { auth_code: "abc123" };
-    expect(validResponse).toHaveProperty("auth_code");
-    expect(typeof validResponse.auth_code).toBe("string");
+  it("sends every field the backend requires", async () => {
+    await createGASetupUser(USER_PARAMS);
+    const body = JSON.parse(
+      (vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string
+    );
+    for (const field of [
+      "client_id",
+      "name",
+      "username",
+      "password",
+      "language",
+    ]) {
+      expect(body, `create_user body missing "${field}"`).toHaveProperty(field);
+    }
   });
 });
 
-describe("status response shape", () => {
-  it("includes completed flag and steps_done array", () => {
-    const validStatus = {
-      completed: false,
-      gdpr_accepted: false,
-      steps_done: [],
-      consents: {},
-    };
-
-    expect(typeof validStatus.completed).toBe("boolean");
-    expect(Array.isArray(validStatus.steps_done)).toBe(true);
+describe("verify_pin request shape", () => {
+  it("strips the grouping dashes before sending the PIN", async () => {
+    await verifyGASetupPin("123-456");
+    const body = JSON.parse(
+      (vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string
+    );
+    expect(body.pin).toBe("123456");
   });
+});
 
-  it("completed status has steps_done populated", () => {
-    const completedStatus = {
-      completed: true,
-      gdpr_accepted: true,
-      steps_done: ["gdpr", "account", "telemetry", "complete"],
-      consents: { gdpr: { version: 1, accepted_at: "2026-01-01" } },
-    };
-
-    expect(completedStatus.completed).toBe(true);
-    expect(completedStatus.steps_done).toContain("gdpr");
-    expect(completedStatus.steps_done).toContain("account");
-    expect(completedStatus.steps_done).toContain("complete");
+describe("sub_user/join request shape", () => {
+  it("carries the required Datenschutz consent (ADR-0006)", async () => {
+    await joinGASubUser(JOIN_PARAMS);
+    const body = JSON.parse(
+      (vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string
+    );
+    expect(body.datenschutz_consent).toBe(true);
+    expect(body.invite_pin).toBe("123456");
   });
 });

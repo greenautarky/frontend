@@ -128,7 +128,7 @@ describe("GA app-flow redirect (authorize ↔ setup)", () => {
       path.join(ENTRYPOINTS_DIR, "authorize.ts"),
       "utf-8"
     );
-    expect(source).toContain("/api/greenautarky_onboarding/status");
+    expect(source).toContain("${GA_API_BASE}/status");
   });
 
   it("authorize.ts stores the auth URL in sessionStorage before redirecting", () => {
@@ -327,7 +327,7 @@ describe("sub-user join flow (ADR-0006)", () => {
       path.join(PANEL_DIR, "../../data/greenautarky_setup.ts"),
       "utf-8"
     );
-    expect(src).toContain("/api/greenautarky_onboarding/sub_user/join");
+    expect(src).toContain("${GA_API_BASE}/sub_user/join");
   });
 });
 

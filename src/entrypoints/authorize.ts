@@ -1,3 +1,4 @@
+import { GA_API_BASE } from "../data/greenautarky_paths";
 import "../auth/ha-authorize";
 
 import("../resources/append-ha-style");
@@ -7,7 +8,7 @@ import("../resources/append-ha-style");
 (async () => {
   if (new URLSearchParams(location.search).get("ga_bypass") === "1") return;
   try {
-    const r = await fetch("/api/greenautarky_onboarding/status", {
+    const r = await fetch(`${GA_API_BASE}/status`, {
       credentials: "include",
     });
     if (r.ok) {
