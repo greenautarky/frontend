@@ -125,16 +125,18 @@ describe("FIX 1 — localize keys resolve against the tables (coverage guard)", 
   it("extraction finds localize keys (fail closed on zero)", () => {
     // If the steps declare no keys, the extraction or the wiring broke — FAIL,
     // do not pass vacuously.
-    expect(usedKeys.size, "no this.localize(<literal>) keys extracted").toBeGreaterThan(
-      0
-    );
+    expect(
+      usedKeys.size,
+      "no this.localize(<literal>) keys extracted"
+    ).toBeGreaterThan(0);
   });
 
   it("every key used in a step exists in BOTH de.ts and en.ts", () => {
     const missing = [...usedKeys].filter((k) => !(k in de) || !(k in en));
-    expect(missing, `keys used in steps but missing from tables: ${missing}`).toEqual(
-      []
-    );
+    expect(
+      missing,
+      `keys used in steps but missing from tables: ${missing}`
+    ).toEqual([]);
   });
 });
 

@@ -14,7 +14,10 @@ import type {
   HaFormSchema,
 } from "../../components/ha-form/types";
 import { genClientId } from "home-assistant-js-websocket";
-import { createGASetupUser, joinGASubUser } from "../../data/greenautarky_setup";
+import {
+  createGASetupUser,
+  joinGASubUser,
+} from "../../data/greenautarky_setup";
 import type { ValueChangedEvent } from "../../types";
 import { onBoardingStyles } from "../../onboarding/styles";
 import { gaBrandingStyles } from "../../onboarding/ga-branding";
@@ -137,7 +140,9 @@ class GaSetupCreateUser extends LitElement {
 
   private get _passwordValid(): boolean {
     const pw = String(this._newUser.password || "");
-    return pw.length >= MIN_PASSWORD_LENGTH && this._passwordStrength.score >= 2;
+    return (
+      pw.length >= MIN_PASSWORD_LENGTH && this._passwordStrength.score >= 2
+    );
   }
 
   protected render(): TemplateResult {
@@ -176,7 +181,8 @@ class GaSetupCreateUser extends LitElement {
                   (i) => html`
                     <div
                       class="strength-segment"
-                      style="background-color: ${i < this._passwordStrength.score
+                      style="background-color: ${i <
+                      this._passwordStrength.score
                         ? this._passwordStrength.color
                         : "var(--divider-color, #e0e0e0)"}"
                     ></div>
@@ -192,7 +198,11 @@ class GaSetupCreateUser extends LitElement {
               <ul class="password-rules">
                 ${PASSWORD_RULES.map(
                   (rule, i) => html`
-                    <li class=${rule.test(String(this._newUser.password)) ? "met" : ""}>
+                    <li
+                      class=${rule.test(String(this._newUser.password))
+                        ? "met"
+                        : ""}
+                    >
                       ${this._pwRuleLabel(i)}
                     </li>
                   `
@@ -302,9 +312,7 @@ class GaSetupCreateUser extends LitElement {
 
   private _pwRuleLabel(index: number): string {
     const key = PW_RULE_KEYS[index];
-    return key
-      ? this.localize(key as any, { count: MIN_PASSWORD_LENGTH })
-      : "";
+    return key ? this.localize(key as any, { count: MIN_PASSWORD_LENGTH }) : "";
   }
 
   private _handleValueChanged(
@@ -357,7 +365,10 @@ class GaSetupCreateUser extends LitElement {
           invite_pin: String(this.invitePin || ""),
           datenschutz_consent: this._datenschutzAccepted,
         });
-        fireEvent(this, "ga-setup-step", { type: "user", result: result as any });
+        fireEvent(this, "ga-setup-step", {
+          type: "user",
+          result: result as any,
+        });
         return;
       }
 

@@ -71,12 +71,8 @@ class GaSetupPin extends LitElement {
       </h1>
       <p class="description">
         ${this.joinMode
-          ? this.localize(
-              "ui.panel.greenautarky_setup.pin.description_invite"
-            )
-          : this.localize(
-              "ui.panel.greenautarky_setup.pin.description_device"
-            )}
+          ? this.localize("ui.panel.greenautarky_setup.pin.description_invite")
+          : this.localize("ui.panel.greenautarky_setup.pin.description_device")}
       </p>
 
       <div class="pin-input-container">
@@ -100,9 +96,9 @@ class GaSetupPin extends LitElement {
             ${this._error}
             ${this._countdown > 0
               ? html`<br />${this.localize(
-                  "ui.panel.greenautarky_setup.pin.retry_after",
-                  { seconds: this._countdown }
-                )}`
+                    "ui.panel.greenautarky_setup.pin.retry_after",
+                    { seconds: this._countdown }
+                  )}`
               : ""}
           </p>`
         : ""}

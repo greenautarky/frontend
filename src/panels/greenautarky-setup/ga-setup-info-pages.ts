@@ -34,7 +34,9 @@ class GaSetupInfoPages extends LitElement {
             >`
           : html`<span></span>`}
         <ha-button unelevated @click=${this._finish}
-          >${this.localize("ui.panel.greenautarky_setup.common.next")}</ha-button
+          >${this.localize(
+            "ui.panel.greenautarky_setup.common.next"
+          )}</ha-button
         >
       </div>
     `;

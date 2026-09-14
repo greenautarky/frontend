@@ -335,9 +335,7 @@ describe("greenautarky-setup CSS variables are themeable (dark-mode safe)", () =
     return out;
   };
 
-  const panelFiles = fs
-    .readdirSync(PANEL_DIR)
-    .filter((f) => f.endsWith(".ts"));
+  const panelFiles = fs.readdirSync(PANEL_DIR).filter((f) => f.endsWith(".ts"));
   const panelSource = panelFiles
     .map((f) => fs.readFileSync(path.join(PANEL_DIR, f), "utf-8"))
     .join("\n");

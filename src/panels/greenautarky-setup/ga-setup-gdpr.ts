@@ -8,7 +8,10 @@ import "../../components/ha-checkbox";
 import "../../components/ha-formfield";
 import { acceptGASetupGDPR } from "../../data/greenautarky_setup";
 import { onBoardingStyles } from "../../onboarding/styles";
-import { gaBrandingStyles, GA_PRODUCT_NAME } from "../../onboarding/ga-branding";
+import {
+  gaBrandingStyles,
+  GA_PRODUCT_NAME,
+} from "../../onboarding/ga-branding";
 
 @customElement("ga-setup-gdpr")
 class GaSetupGdpr extends LitElement {
@@ -66,9 +69,7 @@ class GaSetupGdpr extends LitElement {
       </div>
 
       <ha-formfield
-        .label=${this.localize(
-          "ui.panel.greenautarky_setup.gdpr.accept_label"
-        )}
+        .label=${this.localize("ui.panel.greenautarky_setup.gdpr.accept_label")}
       >
         <ha-checkbox
           @change=${this._acceptChanged}

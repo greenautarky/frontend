@@ -42,13 +42,13 @@ describe("ga-setup-analytics privacy tier defaults", () => {
 
   it("UI text cites the DSGVO legal basis per tier", () => {
     // Tier 1 → Art. 6 (f) — berechtigtes Interesse
-    expect(
-      de["ui.panel.greenautarky_setup.analytics.tier1_legal"]
-    ).toMatch(/Art\.?\s*6.*\(?f\)?|lit\.\s*f/i);
+    expect(de["ui.panel.greenautarky_setup.analytics.tier1_legal"]).toMatch(
+      /Art\.?\s*6.*\(?f\)?|lit\.\s*f/i
+    );
     // Tier 2 → Art. 6 (a) — Einwilligung
-    expect(
-      de["ui.panel.greenautarky_setup.analytics.tier2_legal"]
-    ).toMatch(/Art\.?\s*6.*\(?a\)?|lit\.\s*a/i);
+    expect(de["ui.panel.greenautarky_setup.analytics.tier2_legal"]).toMatch(
+      /Art\.?\s*6.*\(?a\)?|lit\.\s*a/i
+    );
   });
 
   it("Tier 1 toggle is labeled 'recommended' to encourage opt-in default", () => {
@@ -101,9 +101,7 @@ describe("ga-setup-analytics privacy tier defaults", () => {
     expect(detailsBlocks!.length).toBeGreaterThanOrEqual(3);
     // Each renders the shared "more" disclosure label from the table.
     for (const block of detailsBlocks!) {
-      expect(block).toContain(
-        "ui.panel.greenautarky_setup.analytics.more"
-      );
+      expect(block).toContain("ui.panel.greenautarky_setup.analytics.more");
     }
     expect(de["ui.panel.greenautarky_setup.analytics.more"]).toBe(
       "Mehr erfahren"

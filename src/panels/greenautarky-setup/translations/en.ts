@@ -115,7 +115,8 @@ export const messages: Record<string, string> = {
   "ui.panel.greenautarky_setup.analytics.more": "Learn more",
   "ui.panel.greenautarky_setup.analytics.done": "Done",
 
-  "ui.panel.greenautarky_setup.analytics.tier0_title": "Operationally required data",
+  "ui.panel.greenautarky_setup.analytics.tier0_title":
+    "Operationally required data",
   "ui.panel.greenautarky_setup.analytics.tier0_badge": "always on",
   "ui.panel.greenautarky_setup.analytics.tier0_desc":
     "Data we need to maintain your device and close critical security holes — e.g. OTA update status, kernel panics, failed authentications.",

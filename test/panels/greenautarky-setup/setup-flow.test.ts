@@ -431,8 +431,7 @@ describe("FIX 2 — panel & steps are wired to setup-flow (live source)", () => 
     __dirname,
     "../../../src/panels/greenautarky-setup"
   );
-  const read = (f: string) =>
-    fs.readFileSync(path.join(PANEL_DIR, f), "utf-8");
+  const read = (f: string) => fs.readFileSync(path.join(PANEL_DIR, f), "utf-8");
   const panel = read("ha-panel-greenautarky-setup.ts");
 
   it("panel drives navigation through the shared setup-flow module", () => {
