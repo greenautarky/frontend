@@ -20,7 +20,7 @@ export const messages: Record<string, string> = {
   "ui.panel.greenautarky_setup.welcome.header":
     "Willkommen bei Ihrem KI-Butler",
   "ui.panel.greenautarky_setup.welcome.intro":
-    "Lassen Sie uns Ihr Smart Home einrichten. Das dauert nur wenige Minuten.",
+    "Lassen Sie uns Ihren KI-Butler einrichten. Das dauert nur wenige Minuten.",
   "ui.panel.greenautarky_setup.welcome.cta": "Meinen KI-Butler einrichten",
 
   // PIN
@@ -179,7 +179,7 @@ export const messages: Record<string, string> = {
   // Ethernet
   "ui.panel.greenautarky_setup.ethernet.header": "Netzwerk-Einstellungen",
   "ui.panel.greenautarky_setup.ethernet.intro":
-    "Ihr Gerät ist standardmäßig nur über WiFi und VPN erreichbar. Möchten Sie auch die Ethernet-Verbindung aktivieren?",
+    "Ihr Gerät verbindet sich standardmäßig über Mobilfunk (LTE). Wenn Sie möchten, können Sie zusätzlich die Ethernet-Verbindung freigeben – dann ist Ihr Gerät auch über Ihr lokales Netzwerk erreichbar.",
   "ui.panel.greenautarky_setup.ethernet.warning":
     "Hinweis: Ethernet ermöglicht den Zugriff über das lokale Netzwerk.",
   "ui.panel.greenautarky_setup.ethernet.toggle_heading":
