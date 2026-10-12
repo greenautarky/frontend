@@ -20,9 +20,6 @@ export const GA_ACCENT_COLOR = "#E89B30"; // GA Orange — highlights
 
 // -- Texts -------------------------------------------------------------------
 export const GA_PRODUCT_NAME = "GreenAutarky KI-Butler";
-export const GA_WELCOME_HEADER = "Willkommen bei Ihrem KI-Butler";
-export const GA_WELCOME_INTRO =
-  "Lassen Sie uns Ihr Smart Home einrichten. Das dauert nur wenige Minuten.";
 
 // -- GA Logo (inline SVG — green circle with white "GA" text) ----------------
 export const gaLogoSvg = html`
