@@ -1,3 +1,5 @@
+> **GreenAutarky Build** — This is a customized version maintained by [GreenAutarky](https://github.com/greenautarky). Based on [home-assistant/frontend](https://github.com/home-assistant/frontend) by the Home Assistant project. Licensed under Apache-2.0.
+
 # Home Assistant Frontend
 
 This is the repository for the official [Home Assistant](https://home-assistant.io) frontend.
@@ -14,7 +16,6 @@ This is the repository for the official [Home Assistant](https://home-assistant.
 - Development: [Instructions](https://developers.home-assistant.io/docs/frontend/development/)
 - Production build: `script/build_frontend`
 - Gallery: `cd gallery && script/develop_gallery`
-- Supervisor: [Instructions](https://developers.home-assistant.io/docs/supervisor/developing)
 
 ## Frontend development
 

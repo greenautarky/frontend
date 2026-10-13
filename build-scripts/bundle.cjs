@@ -18,16 +18,14 @@ module.exports.sourceMapURL = () => {
 module.exports.ignorePackages = () => [];
 
 // Files from NPM packages that we should replace with empty file
-module.exports.emptyPackages = ({ isHassioBuild }) =>
+module.exports.emptyPackages = ({ isLandingPageBuild }) =>
   [
-    require.resolve("@vaadin/vaadin-material-styles/typography.js"),
-    require.resolve("@vaadin/vaadin-material-styles/font-icons.js"),
-    // Icons in supervisor conflict with icons in HA so we don't load.
-    isHassioBuild &&
+    // Icons in landingpage conflict with icons in HA so we don't load.
+    isLandingPageBuild &&
       require.resolve(
         path.resolve(paths.root_dir, "src/components/ha-icon.ts")
       ),
-    isHassioBuild &&
+    isLandingPageBuild &&
       require.resolve(
         path.resolve(paths.root_dir, "src/components/ha-icon-picker.ts")
       ),
@@ -39,7 +37,6 @@ module.exports.definedVars = ({ isProdBuild, latestBuild, defineOverlay }) => ({
   __VERSION__: JSON.stringify(env.version()),
   __GIT_HASH__: JSON.stringify(env.gitHash()),
   __DEMO__: false,
-  __SUPERVISOR__: false,
   __BACKWARDS_COMPAT__: false,
   __STATIC_PATH__: "/static/",
   __HASS_URL__: `\`${
@@ -293,26 +290,6 @@ module.exports.config = {
     };
   },
 
-  hassio({ isProdBuild, latestBuild, isStatsBuild, isTestBuild }) {
-    return {
-      name: "supervisor" + nameSuffix(latestBuild),
-      entry: {
-        entrypoint: path.resolve(paths.hassio_dir, "src/entrypoint.ts"),
-      },
-      outputPath: outputPath(paths.hassio_output_root, latestBuild),
-      publicPath: publicPath(latestBuild, paths.hassio_publicPath),
-      isProdBuild,
-      latestBuild,
-      isStatsBuild,
-      isTestBuild,
-      isHassioBuild: true,
-      defineOverlay: {
-        __SUPERVISOR__: true,
-        __STATIC_PATH__: `"${paths.hassio_publicPath}/static/"`,
-      },
-    };
-  },
-
   gallery({ isProdBuild, latestBuild }) {
     return {
       name: "gallery" + nameSuffix(latestBuild),
@@ -339,6 +316,7 @@ module.exports.config = {
       publicPath: publicPath(latestBuild),
       isProdBuild,
       latestBuild,
+      isLandingPageBuild: true,
     };
   },
 };

@@ -2,7 +2,7 @@ import { mdiAlert } from "@mdi/js";
 import type { HassEntity } from "home-assistant-js-websocket";
 import type { CSSResultGroup, PropertyValues } from "lit";
 import { LitElement, css, html, nothing } from "lit";
-import { property, state } from "lit/decorators";
+import { customElement, property, state } from "lit/decorators";
 import { ifDefined } from "lit/directives/if-defined";
 import { styleMap } from "lit/directives/style-map";
 import { computeDomain } from "../../common/entity/compute_domain";
@@ -15,8 +15,10 @@ import { iconColorCSS } from "../../common/style/icon_color_css";
 import { cameraUrlWithWidthHeight } from "../../data/camera";
 import { CLIMATE_HVAC_ACTION_TO_MODE } from "../../data/climate";
 import type { HomeAssistant } from "../../types";
+import { addBrandsAuth } from "../../util/brands-url";
 import "../ha-state-icon";
 
+@customElement("state-badge")
 export class StateBadge extends LitElement {
   public hass?: HomeAssistant;
 
@@ -136,6 +138,7 @@ export class StateBadge extends LitElement {
           let imageUrl =
             stateObj.attributes.entity_picture_local ||
             stateObj.attributes.entity_picture;
+          imageUrl = addBrandsAuth(imageUrl);
           if (this.hass) {
             imageUrl = this.hass.hassUrl(imageUrl);
           }
@@ -265,5 +268,3 @@ declare global {
     "state-badge": StateBadge;
   }
 }
-
-customElements.define("state-badge", StateBadge);
