@@ -97,9 +97,6 @@ export const messages: Record<string, string> = {
   "ui.panel.greenautarky_setup.user.pw_rule_2": "Mindestens eine Zahl",
   "ui.panel.greenautarky_setup.user.pw_rule_3": "Mindestens ein Sonderzeichen",
 
-  // Info pages
-  "ui.panel.greenautarky_setup.info_pages.header": "Ihr KI-Butler",
-
   // Analytics / Telemetrie
   "ui.panel.greenautarky_setup.analytics.title": "GreenAutarky Telemetrie",
   "ui.panel.greenautarky_setup.analytics.stale_banner_strong":

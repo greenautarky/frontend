@@ -18,7 +18,6 @@ export type GASetupStepType =
   | "pin"
   | "gdpr"
   | "user"
-  | "info_pages"
   | "analytics"
   | "ethernet";
 
@@ -28,7 +27,6 @@ export const STEP_ORDER: GASetupStepType[] = [
   "pin",
   "gdpr",
   "user",
-  "info_pages",
   "analytics",
   "ethernet",
 ];
@@ -40,7 +38,6 @@ export const STEP_ORDER: GASetupStepType[] = [
  */
 export const STEPS_WITH_BACK: GASetupStepType[] = [
   "gdpr",
-  "info_pages",
   "analytics",
   "ethernet",
 ];
@@ -83,7 +80,7 @@ export function goBack(state: NavState): NavState {
 
 /**
  * Whether the CURRENT step should show/enable a back button: it must be a
- * back-capable step AND have somewhere to go. info_pages is back-capable but
+ * back-capable step AND have somewhere to go. analytics is back-capable but
  * lands with an empty history right after the account gate, so its button is
  * correctly hidden there.
  */

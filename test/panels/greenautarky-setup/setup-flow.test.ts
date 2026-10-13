@@ -17,7 +17,7 @@ import {
  * These test the step sequence and transition rules.
  */
 
-const STEPS = ["welcome", "gdpr", "user", "info_pages", "analytics"] as const;
+const STEPS = ["welcome", "gdpr", "user", "analytics"] as const;
 type StepType = (typeof STEPS)[number];
 
 /**
@@ -28,8 +28,7 @@ function getNextStep(completedStep: StepType): StepType | "done" {
   const transitions: Record<StepType, StepType | "done"> = {
     welcome: "gdpr",
     gdpr: "user",
-    user: "info_pages",
-    info_pages: "analytics",
+    user: "analytics",
     analytics: "done",
   };
   return transitions[completedStep];
@@ -44,15 +43,14 @@ function calculateProgress(completedStep: StepType): number {
 }
 
 describe("GA setup step flow", () => {
-  it("defines exactly 5 steps in order", () => {
+  it("defines exactly 4 steps in order", () => {
     expect(STEPS).toEqual([
       "welcome",
       "gdpr",
       "user",
-      "info_pages",
       "analytics",
     ]);
-    expect(STEPS).toHaveLength(5);
+    expect(STEPS).toHaveLength(4);
   });
 
   it("transitions through all steps in order", () => {
@@ -68,7 +66,6 @@ describe("GA setup step flow", () => {
       "welcome",
       "gdpr",
       "user",
-      "info_pages",
       "analytics",
       "done",
     ]);
@@ -82,8 +79,8 @@ describe("GA setup step flow", () => {
     expect(getNextStep("gdpr")).toBe("user");
   });
 
-  it("info_pages comes after user (user must be authenticated first)", () => {
-    expect(getNextStep("user")).toBe("info_pages");
+  it("analytics comes after user (user must be authenticated first)", () => {
+    expect(getNextStep("user")).toBe("analytics");
   });
 
   it("analytics is the last step before completion", () => {
@@ -91,10 +88,9 @@ describe("GA setup step flow", () => {
   });
 
   it("calculates progress correctly", () => {
-    expect(calculateProgress("welcome")).toBeCloseTo(0.2);
-    expect(calculateProgress("gdpr")).toBeCloseTo(0.4);
-    expect(calculateProgress("user")).toBeCloseTo(0.6);
-    expect(calculateProgress("info_pages")).toBeCloseTo(0.8);
+    expect(calculateProgress("welcome")).toBeCloseTo(0.25);
+    expect(calculateProgress("gdpr")).toBeCloseTo(0.5);
+    expect(calculateProgress("user")).toBeCloseTo(0.75);
     expect(calculateProgress("analytics")).toBeCloseTo(1.0);
   });
 });
@@ -341,34 +337,31 @@ describe("sub-user join flow (ADR-0006)", () => {
 describe("FIX 2 — setup-flow back navigation (live reducer)", () => {
   const start = (): NavState => ({ current: "welcome", history: [] });
 
-  it("STEP_ORDER is the full 7-step flow", () => {
+  it("STEP_ORDER is the full 6-step flow", () => {
     expect(STEP_ORDER).toEqual([
       "welcome",
       "pin",
       "gdpr",
       "user",
-      "info_pages",
       "analytics",
       "ethernet",
     ]);
   });
 
-  it("analytics → back → info_pages", () => {
+  it("analytics right after the account gate offers no back", () => {
     let s = start();
     s = advance(s, "gdpr"); // no-PIN path: welcome → gdpr
     s = advance(s, "user");
-    s = advance(s, "info_pages"); // account gate clears history
-    s = advance(s, "analytics");
-    expect(canGoBack(s)).toBe(true);
-    s = goBack(s);
-    expect(s.current).toBe("info_pages");
+    s = advance(s, "analytics"); // account gate clears history
+    expect(canGoBack(s)).toBe(false);
+    expect(backAvailableFor(s)).toBe(false);
+    expect(goBack(s).current).toBe("analytics");
   });
 
   it("ethernet → back → analytics", () => {
     let s = start();
     s = advance(s, "gdpr");
     s = advance(s, "user");
-    s = advance(s, "info_pages");
     s = advance(s, "analytics");
     s = advance(s, "ethernet");
     s = goBack(s);
@@ -404,24 +397,24 @@ describe("FIX 2 — setup-flow back navigation (live reducer)", () => {
 
     // Once past the account gate, history is cleared so back can never return
     // into create-user.
-    const afterGate = advance(onUser, "info_pages");
+    const afterGate = advance(onUser, "analytics");
     expect(afterGate.history).toEqual([]);
     expect(canGoBack(afterGate)).toBe(false);
     expect(backAvailableFor(afterGate)).toBe(false);
-    expect(goBack(afterGate).current).toBe("info_pages"); // no-op, not "user"
+    expect(goBack(afterGate).current).toBe("analytics"); // no-op, not "user"
   });
 
   it("popstate and the on-page button drive the SAME transition (one reducer)", () => {
-    const s: NavState = { current: "analytics", history: ["info_pages"] };
+    const s: NavState = { current: "ethernet", history: ["analytics"] };
     const viaButton = goBack(s);
     const viaPopstate = goBack(s);
     expect(viaPopstate).toEqual(viaButton);
-    expect(viaButton.current).toBe("info_pages");
+    expect(viaButton.current).toBe("analytics");
   });
 
-  it("progressFor tracks the completed step in the 7-step flow", () => {
-    expect(progressFor("welcome")).toBeCloseTo(1 / 7);
-    expect(progressFor("analytics")).toBeCloseTo(6 / 7);
+  it("progressFor tracks the completed step in the 6-step flow", () => {
+    expect(progressFor("welcome")).toBeCloseTo(1 / 6);
+    expect(progressFor("analytics")).toBeCloseTo(5 / 6);
     expect(progressFor("ethernet")).toBeCloseTo(1);
   });
 });
@@ -456,7 +449,6 @@ describe("FIX 2 — panel & steps are wired to setup-flow (live source)", () => 
   it("exactly the back-capable steps fire ga-setup-back; the gated ones do not", () => {
     for (const f of [
       "ga-setup-gdpr.ts",
-      "ga-setup-info-pages.ts",
       "ga-setup-analytics.ts",
       "ga-setup-ethernet.ts",
     ]) {

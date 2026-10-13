@@ -575,15 +575,14 @@ The GA onboarding page follows the same pattern as stock `onboarding.html`:
 
 All custom onboarding UI lives in `src/panels/greenautarky-setup/`:
 
-| File                             | Purpose                                                               |
-| -------------------------------- | --------------------------------------------------------------------- |
-| `ha-panel-greenautarky-setup.ts` | Main orchestrator (steps: welcome, gdpr, user, info_pages, analytics) |
-| `ga-setup-welcome.ts`            | Welcome screen with GA/HA branding                                    |
-| `ga-setup-gdpr.ts`               | GDPR consent step                                                     |
-| `ga-setup-create-user.ts`        | User creation with email/username toggle + password strength          |
-| `ga-setup-info-pages.ts`         | Product info pages                                                    |
-| `ga-setup-analytics.ts`          | HA analytics + GA telemetry toggles                                   |
-| `password-strength.ts`           | Extracted testable password scoring module                            |
+| File                             | Purpose                                                      |
+| -------------------------------- | ------------------------------------------------------------ |
+| `ha-panel-greenautarky-setup.ts` | Main orchestrator (steps: welcome, gdpr, user, analytics)    |
+| `ga-setup-welcome.ts`            | Welcome screen with GA/HA branding                           |
+| `ga-setup-gdpr.ts`               | GDPR consent step                                            |
+| `ga-setup-create-user.ts`        | User creation with email/username toggle + password strength |
+| `ga-setup-analytics.ts`          | HA analytics + GA telemetry toggles                          |
+| `password-strength.ts`           | Extracted testable password scoring module                   |
 
 Supporting files:
 

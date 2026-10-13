@@ -28,7 +28,6 @@ import "./ga-setup-welcome";
 import "./ga-setup-pin";
 import "./ga-setup-gdpr";
 import "./ga-setup-create-user";
-import "./ga-setup-info-pages";
 import "./ga-setup-analytics";
 import "./ga-setup-ethernet";
 import { advance, canGoBack, goBack, progressFor } from "./setup-flow";
@@ -157,11 +156,6 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
           .joinMode=${this._joinMode}
           .invitePin=${this._invitePin}
         ></ga-setup-create-user>`;
-      case "info_pages":
-        return html`<ga-setup-info-pages
-          .localize=${this.localize}
-          .canBack=${this._stepHistory.length > 0}
-        ></ga-setup-info-pages>`;
       case "analytics":
         return html`<ga-setup-analytics
           .hass=${this.hass}
@@ -188,7 +182,7 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
     // Build localize() from the bundled de/en tables (no runtime fragment).
     this._rebuildLocalize();
     this.addEventListener("ga-setup-step", (ev) => this._handleStep(ev));
-    // "Zurück" button (gdpr / info_pages / analytics / ethernet) and the
+    // "Zurück" button (gdpr / analytics / ethernet) and the
     // browser Back button both route through the SAME reducer, so they produce
     // identical transitions and never re-run a step's side effects.
     this.addEventListener("ga-setup-back", this._goBack);
@@ -296,22 +290,20 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
         await this._connectHass(auth);
         if (this._joinMode) {
           // Sub-user joined + auto-logged-in on their own device → go straight
-          // to their dashboard (skip device-level info/analytics/ethernet).
+          // to their dashboard (skip device-level analytics/ethernet).
           document.location.assign("/");
           return;
         }
         // Account gate: advance() clears the back history here, so a later
         // "Zurück" (or the browser Back button) can never return to
         // create-user and create a second account server-side.
-        this._goForward("info_pages");
+        this._goForward("analytics");
       } catch (_err: any) {
         alert(this.localize("ui.panel.greenautarky_setup.panel.error_retry"));
         location.reload();
       } finally {
         this._loading = false;
       }
-    } else if (type === "info_pages") {
-      this._goForward("analytics");
     } else if (type === "analytics") {
       this._goForward("ethernet");
     } else if (type === "ethernet") {

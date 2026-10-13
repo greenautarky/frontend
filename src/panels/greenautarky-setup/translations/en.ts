@@ -101,9 +101,6 @@ export const messages: Record<string, string> = {
   "ui.panel.greenautarky_setup.user.pw_rule_3":
     "At least one special character",
 
-  // Info pages
-  "ui.panel.greenautarky_setup.info_pages.header": "Your KI-Butler",
-
   // Analytics / Telemetry
   "ui.panel.greenautarky_setup.analytics.title": "GreenAutarky telemetry",
   "ui.panel.greenautarky_setup.analytics.stale_banner_strong":

@@ -85,7 +85,6 @@ describe("greenautarky-setup panel requirements", () => {
     expect(panel).toContain("./ga-setup-welcome");
     expect(panel).toContain("./ga-setup-gdpr");
     expect(panel).toContain("./ga-setup-create-user");
-    expect(panel).toContain("./ga-setup-info-pages");
     expect(panel).toContain("./ga-setup-analytics");
   });
 
@@ -105,7 +104,6 @@ describe("greenautarky-setup panel requirements", () => {
       "pin",
       "gdpr",
       "user",
-      "info_pages",
       "analytics",
       "ethernet",
     ]) {
@@ -162,7 +160,6 @@ describe("greenautarky-setup panel requirements", () => {
       "ga-setup-welcome.ts",
       "ga-setup-gdpr.ts",
       "ga-setup-create-user.ts",
-      "ga-setup-info-pages.ts",
       "ga-setup-analytics.ts",
       "password-strength.ts",
     ];

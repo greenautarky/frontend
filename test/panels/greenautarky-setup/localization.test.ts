@@ -22,13 +22,12 @@ const PANEL_DIR = path.resolve(
   "../../../src/panels/greenautarky-setup"
 );
 
-// The 7 step components the task requires to be localised.
+// The 6 step components the task requires to be localised.
 const STEP_FILES = [
   "ga-setup-welcome.ts",
   "ga-setup-pin.ts",
   "ga-setup-gdpr.ts",
   "ga-setup-create-user.ts",
-  "ga-setup-info-pages.ts",
   "ga-setup-analytics.ts",
   "ga-setup-ethernet.ts",
 ];
