@@ -35,7 +35,7 @@ export const PASSWORD_RULES = [
   },
   {
     test: (pw: string) => /[A-Z]/.test(pw) && /[a-z]/.test(pw),
-    label: "Gross- und Kleinbuchstaben",
+    label: "Groß- und Kleinbuchstaben",
   },
   {
     test: (pw: string) => /\d/.test(pw),

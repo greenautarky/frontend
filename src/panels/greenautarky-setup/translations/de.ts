@@ -54,7 +54,7 @@ export const messages: Record<string, string> = {
   "ui.panel.greenautarky_setup.gdpr.right_2":
     "Sie können Ihre Daten jederzeit exportieren oder löschen",
   "ui.panel.greenautarky_setup.gdpr.right_3":
-    "Analysen und Diagnosen sind optional und standardmäßig deaktiviert",
+    "Fehlerberichte sind voreingestellt aktiv und jederzeit abschaltbar; detaillierte Leistungsdaten werden nur mit Ihrer Einwilligung erhoben",
   "ui.panel.greenautarky_setup.gdpr.right_4":
     "Drittanbieter-Integrationen teilen Daten nur bei ausdrücklicher Konfiguration",
   "ui.panel.greenautarky_setup.gdpr.accept_label":
@@ -93,7 +93,7 @@ export const messages: Record<string, string> = {
   "ui.panel.greenautarky_setup.user.pw_strength_3": "Gut",
   "ui.panel.greenautarky_setup.user.pw_strength_4": "Stark",
   "ui.panel.greenautarky_setup.user.pw_rule_0": "Mindestens {count} Zeichen",
-  "ui.panel.greenautarky_setup.user.pw_rule_1": "Gross- und Kleinbuchstaben",
+  "ui.panel.greenautarky_setup.user.pw_rule_1": "Groß- und Kleinbuchstaben",
   "ui.panel.greenautarky_setup.user.pw_rule_2": "Mindestens eine Zahl",
   "ui.panel.greenautarky_setup.user.pw_rule_3": "Mindestens ein Sonderzeichen",
 
