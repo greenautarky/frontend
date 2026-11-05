@@ -56,7 +56,7 @@ export const messages: Record<string, string> = {
   "ui.panel.greenautarky_setup.gdpr.right_2":
     "Sie können Ihre Daten jederzeit exportieren oder löschen",
   "ui.panel.greenautarky_setup.gdpr.right_3":
-    "Analysen und Diagnosen sind optional und standardmäßig deaktiviert",
+    "Fehlerberichte sind voreingestellt aktiv und jederzeit abschaltbar; detaillierte Leistungsdaten werden nur mit Ihrer Einwilligung erhoben",
   "ui.panel.greenautarky_setup.gdpr.right_4":
     "Drittanbieter-Integrationen teilen Daten nur bei ausdrücklicher Konfiguration",
   // LEGAL — still German
