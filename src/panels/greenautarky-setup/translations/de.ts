@@ -188,7 +188,10 @@ export const messages: Record<string, string> = {
   "ui.panel.greenautarky_setup.panel.error_retry":
     "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
   "ui.panel.greenautarky_setup.panel.consent_missing":
-    "Die Einrichtung konnte nicht abgeschlossen werden: {message} Bitte stimme der Datenschutzerklärung erneut zu.",
+    "Die Einrichtung konnte nicht abgeschlossen werden, weil die Zustimmung zur Datenschutzerklärung fehlt. Bitte stimme ihr erneut zu.",
   "ui.panel.greenautarky_setup.panel.complete_failed":
     "Die Einrichtung konnte nicht abgeschlossen werden. Bitte versuche es erneut.",
+  "ui.panel.greenautarky_setup.panel.to_start_page": "Zur Startseite",
+  "ui.panel.greenautarky_setup.panel.account_exists":
+    "Auf diesem Gerät wurde bereits ein Konto angelegt ({hint}). Bitte gib dieselbe E-Mail-Adresse und das zugehörige Passwort ein.",
 };

@@ -96,9 +96,10 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
   /** Invite PIN collected in the join-mode PIN step, passed to create-user. */
   @state() private _invitePin?: string;
 
-  /** Resident-facing message when the last "complete" did not succeed. Shown
-   * above the current step; cleared when the resident moves on. */
-  @state() private _notice?: string;
+  /** Why the last "complete" did not succeed (a KEY, localized at render time,
+   * so a language switch re-renders it). Shown above the current step; cleared
+   * when the resident moves on or goes back. */
+  @state() private _notice?: "consent_missing" | "complete_failed";
 
   /** Set when /complete answered 409 consent_missing and the resident was led
    * back to the GDPR step: the next accepted GDPR step finishes the setup
@@ -124,7 +125,18 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
              "Zurück" and returning restores what the user had entered. -->
         <div class="card-content">
           ${this._notice
-            ? html`<div class="ga-notice" role="alert">${this._notice}</div>`
+            ? html`<div class="ga-notice" role="alert">
+                ${this.localize(
+                  `ui.panel.greenautarky_setup.panel.${this._notice}`
+                )}
+                ${this._notice === "complete_failed"
+                  ? html`<a class="ga-notice-home" href="/"
+                      >${this.localize(
+                        "ui.panel.greenautarky_setup.panel.to_start_page"
+                      )}</a
+                    >`
+                  : nothing}
+              </div>`
             : nothing}
           ${cache(this._renderStep())}
         </div>
@@ -350,24 +362,30 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
     try {
       await completeGASetup();
     } catch (err: any) {
-      this._loading = false;
       const outcome = classifyCompleteError(err);
-      if (outcome.kind === "consent_missing") {
-        this._consentRecovery = true;
-        this._notice = this.localize(
-          "ui.panel.greenautarky_setup.panel.consent_missing",
-          { message: outcome.message }
-        );
-        this._progress = progressFor("gdpr");
-        this._goForward("gdpr");
-      } else {
-        this._notice = this.localize(
-          "ui.panel.greenautarky_setup.panel.complete_failed"
-        );
-        this._progress = progressFor("analytics");
+      // 403 "already completed": the setup IS finished (an earlier request
+      // landed), so this is success - leave like a 200 does.
+      if (outcome.kind !== "already_completed") {
+        this._loading = false;
+        if (outcome.kind === "consent_missing") {
+          this._consentRecovery = true;
+          this._notice = "consent_missing";
+          this._progress = progressFor("gdpr");
+          this._goForward("gdpr");
+        } else {
+          // Any other failure: say so, stay on the last step (retry), and
+          // give a visible way out (the notice links to the start page).
+          this._notice = "complete_failed";
+          this._progress = progressFor("analytics");
+        }
+        return;
       }
-      return;
     }
+    this._leaveSetup();
+  }
+
+  /** Leave the wizard: back to the app flow that sent us, else the start page. */
+  private _leaveSetup() {
     // If we arrived from /auth/authorize (app flow), return there so the
     // app can complete auth; otherwise go to home (login page).
     let authRedirect: string | null = null;
@@ -415,6 +433,10 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
     this._stepHistory = prevState.history;
     this._currentStep = prevState.current;
     this._progress = progressFor(prevState.current);
+    // Leaving the re-shown GDPR step backwards ends the recovery: the notice
+    // belongs to that step, and a later GDPR accept must go the normal way.
+    this._notice = undefined;
+    this._consentRecovery = false;
   };
 
   /** Browser Back button. Mirrors the on-page button, and traps the user in the
@@ -499,6 +521,12 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
       border-radius: 8px;
       border: 1px solid var(--error-color, #db4437);
       color: var(--error-color, #db4437);
+    }
+    .ga-notice-home {
+      display: block;
+      margin-top: 8px;
+      color: inherit;
+      text-decoration: underline;
     }
     .loading {
       padding: 64px 0;

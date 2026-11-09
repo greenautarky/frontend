@@ -198,9 +198,12 @@ export const messages: Record<string, string> = {
   "ui.panel.greenautarky_setup.panel.error_retry":
     "Something went wrong. Please try again.",
   "ui.panel.greenautarky_setup.panel.consent_missing":
-    "Setup could not be completed: {message} Please accept the privacy policy again.",
+    "Setup could not be completed because the privacy policy consent is missing. Please accept it again.",
   "ui.panel.greenautarky_setup.panel.complete_failed":
     "Setup could not be completed. Please try again.",
+  "ui.panel.greenautarky_setup.panel.to_start_page": "Go to the start page",
+  "ui.panel.greenautarky_setup.panel.account_exists":
+    "An account has already been created on this device ({hint}). Please enter the same email address and its password.",
 };
 
 // Keys whose English value is deliberately still the German original, pending a

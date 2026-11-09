@@ -99,28 +99,67 @@ export function progressFor(step: GASetupStepType): number {
 
 /** What a refused (non-OK) POST /complete means for the resident. */
 export type CompleteFailure =
-  | { kind: "consent_missing"; message: string }
+  | { kind: "consent_missing" }
+  | { kind: "already_completed" }
   | { kind: "error" };
 
 /**
  * Classify a rejection from completeGASetup() (handleFetchPromise throws
- * `{ status_code, body }`). Only a 409 whose body carries code
- * "consent_missing" is recoverable on the GDPR step; everything else —
- * including a 409 without that code, a 403, a 5xx or a network failure — is a
- * generic error. Nothing is ever treated as success.
+ * `{ status_code, body }`).
+ *
+ * - 409 with body.code "consent_missing" AND "gdpr" among body.missing: the
+ *   resident is led back to the GDPR step. The server's own text is never
+ *   shown (it is English and not for residents); the page has fixed DE/EN text.
+ * - 403 "already completed" (code "already_completed"; older servers: the
+ *   message "Onboarding already completed"): the setup IS finished, so this is
+ *   success. Any other 403 (PIN gate) is a real refusal.
+ * - everything else - a 409 without the code, a consent_missing for something
+ *   other than gdpr, a 5xx, a network failure - is a generic error.
  */
 export function classifyCompleteError(err: any): CompleteFailure {
+  const body = err?.body;
+  const obj = body && typeof body === "object" ? body : undefined;
+  if (
+    err?.status_code === 409 &&
+    obj?.code === "consent_missing" &&
+    Array.isArray(obj.missing) &&
+    obj.missing.includes("gdpr")
+  ) {
+    return { kind: "consent_missing" };
+  }
+  if (
+    err?.status_code === 403 &&
+    (obj?.code === "already_completed" ||
+      obj?.message === "Onboarding already completed")
+  ) {
+    return { kind: "already_completed" };
+  }
+  return { kind: "error" };
+}
+
+/** What a refused POST /create_user means for the resident. */
+export type CreateUserFailure =
+  | { kind: "account_exists"; hint: string }
+  | { kind: "error"; message: string };
+
+/**
+ * Classify a rejection from the create-user call. Only 409 "account_exists"
+ * (the device already has this onboarding's account under another address) gets
+ * fixed, localized text; the hint is the server's masked address. Anything else
+ * keeps showing the server's message, as before.
+ */
+export function classifyCreateUserError(err: any): CreateUserFailure {
   const body = err?.body;
   if (
     err?.status_code === 409 &&
     body &&
     typeof body === "object" &&
-    body.code === "consent_missing"
+    body.code === "account_exists"
   ) {
     return {
-      kind: "consent_missing",
-      message: typeof body.message === "string" ? body.message : "",
+      kind: "account_exists",
+      hint: typeof body.hint === "string" ? body.hint : "",
     };
   }
-  return { kind: "error" };
+  return { kind: "error", message: body?.message || err?.message || "" };
 }

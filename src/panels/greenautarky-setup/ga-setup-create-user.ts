@@ -27,6 +27,7 @@ import {
   computePasswordStrength,
   PASSWORD_RULES,
 } from "./password-strength";
+import { classifyCreateUserError } from "./setup-flow";
 
 // ha-form field name → localization key (labels resolved via this.localize).
 const FIELD_LABEL_KEYS: Record<string, string> = {
@@ -401,7 +402,14 @@ class GaSetupCreateUser extends LitElement {
       // eslint-disable-next-line no-console
       console.error(err);
       this._loading = false;
-      this._errorMsg = err.body?.message || err.message;
+      const failure = classifyCreateUserError(err);
+      this._errorMsg =
+        failure.kind === "account_exists"
+          ? this.localize(
+              "ui.panel.greenautarky_setup.panel.account_exists",
+              { hint: failure.hint }
+            )
+          : failure.message;
     }
   }
 
