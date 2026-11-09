@@ -194,4 +194,7 @@ export const messages: Record<string, string> = {
   "ui.panel.greenautarky_setup.panel.to_start_page": "Zur Startseite",
   "ui.panel.greenautarky_setup.panel.account_exists":
     "Auf diesem Gerät wurde bereits ein Konto angelegt ({hint}). Bitte gib dieselbe E-Mail-Adresse und das zugehörige Passwort ein.",
+  "ui.panel.greenautarky_setup.panel.account_replace_warning":
+    "Achtung: Wenn du ein neues Konto anlegst, wird der bisherige Eintrag ({hint}) verworfen und gelöscht. Das ist nur möglich, solange die Einrichtung nicht abgeschlossen ist.",
+  "ui.panel.greenautarky_setup.panel.account_replace": "Konto ersetzen",
 };

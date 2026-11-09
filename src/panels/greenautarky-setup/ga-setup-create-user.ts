@@ -116,6 +116,9 @@ class GaSetupCreateUser extends LitElement {
 
   @state() private _errorMsg?: string;
 
+  /** The server offered to replace this run's account (409 account_exists). */
+  @state() private _replaceHint?: string;
+
   @state() private _formError: Record<string, string> = {};
 
   @state() private _newUser: HaFormDataContainer = {};
@@ -159,6 +162,23 @@ class GaSetupCreateUser extends LitElement {
 
       ${this._errorMsg
         ? html`<ha-alert alert-type="error">${this._errorMsg}</ha-alert>`
+        : ""}
+      ${this._replaceHint !== undefined
+        ? html`<ha-alert alert-type="warning" class="replace-account-warning">
+              ${this.localize(
+                "ui.panel.greenautarky_setup.panel.account_replace_warning",
+                { hint: this._replaceHint }
+              )}
+            </ha-alert>
+            <ha-button
+              class="replace-account"
+              .disabled=${this._loading}
+              @click=${this._replaceAccount}
+            >
+              ${this.localize(
+                "ui.panel.greenautarky_setup.panel.account_replace"
+              )}
+            </ha-button>`
         : ""}
 
       <ha-form
@@ -352,10 +372,15 @@ class GaSetupCreateUser extends LitElement {
     }
   }
 
-  private async _submitForm(ev): Promise<void> {
+  private _replaceAccount(ev): Promise<void> {
+    return this._submitForm(ev, true);
+  }
+
+  private async _submitForm(ev, replaceAccount = false): Promise<void> {
     ev.preventDefault();
     this._loading = true;
     this._errorMsg = "";
+    this._replaceHint = undefined;
 
     try {
       if (this.joinMode) {
@@ -392,6 +417,7 @@ class GaSetupCreateUser extends LitElement {
         username,
         password: String(this._newUser.password),
         language: this.language,
+        ...(replaceAccount ? { replace_account: true } : {}),
       });
 
       fireEvent(this, "ga-setup-step", {
@@ -410,6 +436,9 @@ class GaSetupCreateUser extends LitElement {
               { hint: failure.hint }
             )
           : failure.message;
+      if (failure.kind === "account_exists" && failure.replaceable) {
+        this._replaceHint = failure.hint;
+      }
     }
   }
 

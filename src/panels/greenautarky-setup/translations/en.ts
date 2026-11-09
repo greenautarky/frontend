@@ -204,6 +204,9 @@ export const messages: Record<string, string> = {
   "ui.panel.greenautarky_setup.panel.to_start_page": "Go to the start page",
   "ui.panel.greenautarky_setup.panel.account_exists":
     "An account has already been created on this device ({hint}). Please enter the same email address and its password.",
+  "ui.panel.greenautarky_setup.panel.account_replace_warning":
+    "Warning: if you create a new account, the previous entry ({hint}) is discarded and deleted. This is only possible while the setup is not finished.",
+  "ui.panel.greenautarky_setup.panel.account_replace": "Replace account",
 };
 
 // Keys whose English value is deliberately still the German original, pending a

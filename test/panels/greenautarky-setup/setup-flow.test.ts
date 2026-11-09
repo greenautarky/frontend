@@ -9,6 +9,7 @@ import {
   canGoBack,
   backAvailableFor,
   progressFor,
+  classifyCreateUserError,
   type NavState,
 } from "../../../src/panels/greenautarky-setup/setup-flow";
 
@@ -466,5 +467,42 @@ describe("FIX 2 — panel & steps are wired to setup-flow (live source)", () => 
         "ga-setup-back"
       );
     }
+  });
+});
+
+describe("classifyCreateUserError - account_exists / replace offer (Odoo #1695)", () => {
+  const refusal = (body: any) => ({ status_code: 409, body });
+
+  it("a replaceable 409 account_exists carries replaceable: true", () => {
+    expect(
+      classifyCreateUserError(
+        refusal({ code: "account_exists", hint: "r***@example.invalid", replaceable: true })
+      )
+    ).toEqual({ kind: "account_exists", hint: "r***@example.invalid", replaceable: true });
+  });
+
+  it("a 409 without replaceable true (or an older server) offers no replacement", () => {
+    for (const replaceable of [false, undefined, "yes", 1]) {
+      const f: any = classifyCreateUserError(
+        refusal({ code: "account_exists", hint: "x", replaceable })
+      );
+      expect(f.kind).toBe("account_exists");
+      expect(f.replaceable).toBe(false);
+    }
+  });
+
+  it("other failures stay a plain error with the server message", () => {
+    expect(
+      classifyCreateUserError({ status_code: 400, body: { message: "bad" } })
+    ).toEqual({ kind: "error", message: "bad" });
+  });
+
+  it("the create-user step offers 'replace' only from the server's flag and sends replace_account", () => {
+    const src = fs.readFileSync(
+      path.resolve(__dirname, "../../../src/panels/greenautarky-setup/ga-setup-create-user.ts"),
+      "utf8"
+    );
+    expect(src).toContain("failure.replaceable");
+    expect(src).toContain("replace_account: true");
   });
 });

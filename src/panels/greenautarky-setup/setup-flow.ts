@@ -139,13 +139,15 @@ export function classifyCompleteError(err: any): CompleteFailure {
 
 /** What a refused POST /create_user means for the resident. */
 export type CreateUserFailure =
-  | { kind: "account_exists"; hint: string }
+  | { kind: "account_exists"; hint: string; replaceable: boolean }
   | { kind: "error"; message: string };
 
 /**
  * Classify a rejection from the create-user call. Only 409 "account_exists"
  * (the device already has this onboarding's account under another address) gets
- * fixed, localized text; the hint is the server's masked address. Anything else
+ * fixed, localized text; the hint is the server's masked address, and
+ * `replaceable` (server-decided, true only in a PIN-verified run whose account
+ * this wizard created) lets the page offer "replace account". Anything else
  * keeps showing the server's message, as before.
  */
 export function classifyCreateUserError(err: any): CreateUserFailure {
@@ -159,6 +161,7 @@ export function classifyCreateUserError(err: any): CreateUserFailure {
     return {
       kind: "account_exists",
       hint: typeof body.hint === "string" ? body.hint : "",
+      replaceable: body.replaceable === true,
     };
   }
   return { kind: "error", message: body?.message || err?.message || "" };

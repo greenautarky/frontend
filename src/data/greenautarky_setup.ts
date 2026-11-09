@@ -43,6 +43,8 @@ export const createGASetupUser = (params: {
   username: string;
   password: string;
   language: string;
+  /** Explicit "replace the not-yet-completed account" (PIN-verified run only). */
+  replace_account?: boolean;
 }): Promise<GASetupUserResponse> =>
   handleFetchPromise<GASetupUserResponse>(
     fetch(`${GA_API_BASE}/create_user`, {

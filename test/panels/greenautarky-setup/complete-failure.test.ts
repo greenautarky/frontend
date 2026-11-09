@@ -80,7 +80,11 @@ describe("classifyCreateUserError", () => {
         status_code: 409,
         body: { code: "account_exists", hint: "r***@example.invalid" },
       })
-    ).toEqual({ kind: "account_exists", hint: "r***@example.invalid" });
+    ).toEqual({
+      kind: "account_exists",
+      hint: "r***@example.invalid",
+      replaceable: false,
+    });
   });
 
   it("anything else keeps the server message", () => {
