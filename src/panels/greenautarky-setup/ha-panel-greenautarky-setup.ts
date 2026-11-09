@@ -30,7 +30,13 @@ import "./ga-setup-gdpr";
 import "./ga-setup-create-user";
 import "./ga-setup-analytics";
 import "./ga-setup-ethernet";
-import { advance, canGoBack, goBack, progressFor } from "./setup-flow";
+import {
+  advance,
+  canGoBack,
+  classifyCompleteError,
+  goBack,
+  progressFor,
+} from "./setup-flow";
 import type { GASetupStepType } from "./setup-flow";
 import { buildGaLocalize, GA_SUPPORTED_LANGUAGES } from "./ga-localize";
 
@@ -90,6 +96,15 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
   /** Invite PIN collected in the join-mode PIN step, passed to create-user. */
   @state() private _invitePin?: string;
 
+  /** Resident-facing message when the last "complete" did not succeed. Shown
+   * above the current step; cleared when the resident moves on. */
+  @state() private _notice?: string;
+
+  /** Set when /complete answered 409 consent_missing and the resident was led
+   * back to the GDPR step: the next accepted GDPR step finishes the setup
+   * directly. It must NOT continue to "user" — the account already exists. */
+  private _consentRecovery = false;
+
   protected render() {
     const adminLink = this._authRedirect
       ? html`<a
@@ -107,7 +122,12 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
         <!-- cache() keeps each step's DOM (and its internal state — e.g. the
              analytics consent toggles) alive when switched out, so pressing
              "Zurück" and returning restores what the user had entered. -->
-        <div class="card-content">${cache(this._renderStep())}</div>
+        <div class="card-content">
+          ${this._notice
+            ? html`<div class="ga-notice" role="alert">${this._notice}</div>`
+            : nothing}
+          ${cache(this._renderStep())}
+        </div>
       </ha-card>
       <div class="footer">
         <ha-language-picker
@@ -275,6 +295,14 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
         this._goForward("gdpr");
       }
     } else if (type === "gdpr") {
+      if (this._consentRecovery) {
+        // Re-consent after a refused /complete: the account exists already,
+        // so go straight back to finishing instead of re-running "user".
+        this._consentRecovery = false;
+        this._notice = undefined;
+        await this._finishSetup();
+        return;
+      }
       this._goForward("user");
     } else if (type === "user") {
       // User was created — authenticate with the returned auth code
@@ -307,32 +335,56 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
     } else if (type === "analytics") {
       this._goForward("ethernet");
     } else if (type === "ethernet") {
-      // All done — mark setup complete and redirect
-      this._loading = true;
-      this._progress = 1;
-      try {
-        await completeGASetup();
-      } catch (_err: any) {
-        // Best effort — redirect anyway
+      await this._finishSetup();
+    }
+  }
+
+  /** Mark the setup complete server-side, and only on success leave the page.
+   * A refused /complete is never swallowed: a missing consent (409
+   * consent_missing) shows the server's message and leads back to the GDPR
+   * step; any other failure shows a generic error and stays here. */
+  private async _finishSetup() {
+    this._loading = true;
+    this._progress = 1;
+    this._notice = undefined;
+    try {
+      await completeGASetup();
+    } catch (err: any) {
+      this._loading = false;
+      const outcome = classifyCompleteError(err);
+      if (outcome.kind === "consent_missing") {
+        this._consentRecovery = true;
+        this._notice = this.localize(
+          "ui.panel.greenautarky_setup.panel.consent_missing",
+          { message: outcome.message }
+        );
+        this._progress = progressFor("gdpr");
+        this._goForward("gdpr");
+      } else {
+        this._notice = this.localize(
+          "ui.panel.greenautarky_setup.panel.complete_failed"
+        );
+        this._progress = progressFor("analytics");
       }
-      // If we arrived from /auth/authorize (app flow), return there so the
-      // app can complete auth; otherwise go to home (login page).
-      let authRedirect: string | null = null;
+      return;
+    }
+    // If we arrived from /auth/authorize (app flow), return there so the
+    // app can complete auth; otherwise go to home (login page).
+    let authRedirect: string | null = null;
+    try {
+      authRedirect = sessionStorage.getItem("ga_auth_redirect");
+    } catch (_) {
+      // sessionStorage not available
+    }
+    if (authRedirect) {
       try {
-        authRedirect = sessionStorage.getItem("ga_auth_redirect");
+        sessionStorage.removeItem("ga_auth_redirect");
       } catch (_) {
         // sessionStorage not available
       }
-      if (authRedirect) {
-        try {
-          sessionStorage.removeItem("ga_auth_redirect");
-        } catch (_) {
-          // sessionStorage not available
-        }
-        document.location.assign(authRedirect);
-      } else {
-        document.location.assign("/");
-      }
+      document.location.assign(authRedirect);
+    } else {
+      document.location.assign("/");
     }
   }
 
@@ -440,6 +492,13 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
       left: 0;
       width: 100%;
       z-index: 10;
+    }
+    .ga-notice {
+      margin-bottom: 16px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--error-color, #db4437);
+      color: var(--error-color, #db4437);
     }
     .loading {
       padding: 64px 0;

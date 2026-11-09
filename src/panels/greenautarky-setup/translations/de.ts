@@ -187,4 +187,8 @@ export const messages: Record<string, string> = {
   // Panel-level
   "ui.panel.greenautarky_setup.panel.error_retry":
     "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
+  "ui.panel.greenautarky_setup.panel.consent_missing":
+    "Die Einrichtung konnte nicht abgeschlossen werden: {message} Bitte stimme der Datenschutzerklärung erneut zu.",
+  "ui.panel.greenautarky_setup.panel.complete_failed":
+    "Die Einrichtung konnte nicht abgeschlossen werden. Bitte versuche es erneut.",
 };

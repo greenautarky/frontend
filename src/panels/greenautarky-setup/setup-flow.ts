@@ -96,3 +96,31 @@ export function progressFor(step: GASetupStepType): number {
   }
   return (idx + 1) / STEP_ORDER.length;
 }
+
+/** What a refused (non-OK) POST /complete means for the resident. */
+export type CompleteFailure =
+  | { kind: "consent_missing"; message: string }
+  | { kind: "error" };
+
+/**
+ * Classify a rejection from completeGASetup() (handleFetchPromise throws
+ * `{ status_code, body }`). Only a 409 whose body carries code
+ * "consent_missing" is recoverable on the GDPR step; everything else —
+ * including a 409 without that code, a 403, a 5xx or a network failure — is a
+ * generic error. Nothing is ever treated as success.
+ */
+export function classifyCompleteError(err: any): CompleteFailure {
+  const body = err?.body;
+  if (
+    err?.status_code === 409 &&
+    body &&
+    typeof body === "object" &&
+    body.code === "consent_missing"
+  ) {
+    return {
+      kind: "consent_missing",
+      message: typeof body.message === "string" ? body.message : "",
+    };
+  }
+  return { kind: "error" };
+}

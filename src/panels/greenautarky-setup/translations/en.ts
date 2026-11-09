@@ -197,6 +197,10 @@ export const messages: Record<string, string> = {
   // Panel-level
   "ui.panel.greenautarky_setup.panel.error_retry":
     "Something went wrong. Please try again.",
+  "ui.panel.greenautarky_setup.panel.consent_missing":
+    "Setup could not be completed: {message} Please accept the privacy policy again.",
+  "ui.panel.greenautarky_setup.panel.complete_failed":
+    "Setup could not be completed. Please try again.",
 };
 
 // Keys whose English value is deliberately still the German original, pending a
