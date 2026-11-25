@@ -241,7 +241,8 @@ class HaPanelGreenautarkySetup extends litLocalizeLiteMixin(HassElement) {
       const params = new URLSearchParams(window.location.search);
       const pin = params.get("pin");
       const device = params.get("device");
-      if (pin && /^\d{6}$/.test(pin)) {
+      // Join mode only (greenautarky-site 2.12.13 carries this in its bundle).
+      if (pin && this._joinMode && /^\d{6}$/.test(pin)) {
         this._autoPin = pin;
       }
       if (device) {

@@ -14,6 +14,9 @@ import {
 import type { HomeAssistant } from "../../types";
 import { onBoardingStyles } from "../../onboarding/styles";
 import { gaLogoIcon } from "../../onboarding/ga-branding";
+import { renderSaveNotice } from "./save-notice";
+import type { SaveFailure } from "./save-step";
+import { classifySaveError, withTimeout } from "./save-step";
 
 @customElement("ga-setup-analytics")
 class GaSetupAnalytics extends LitElement {
@@ -41,6 +44,12 @@ class GaSetupAnalytics extends LitElement {
   // true only for "consent given under an older policy"). See
   // ga-ihost-docs/PRIVACY_TIERS.md § Versioning.
   @state() private _consentIsStale = false;
+
+  @state() private _saving = false;
+
+  @state() private _saveFailure?: SaveFailure;
+
+  @state() private _failedTries = 0;
 
   protected render(): TemplateResult {
     // Phase F — full consent UI redesign. Three sections (Tier 0
@@ -263,6 +272,13 @@ class GaSetupAnalytics extends LitElement {
         })}
       </p>
 
+      ${renderSaveNotice(
+        this.localize,
+        this._saveFailure,
+        this._failedTries,
+        this._next
+      )}
+
       <div class="footer">
         ${this.canBack
           ? html`<ha-button class="back" @click=${this._back}
@@ -271,9 +287,14 @@ class GaSetupAnalytics extends LitElement {
               )}</ha-button
             >`
           : html`<span></span>`}
-        <ha-button @click=${this._save}
+        <ha-button
+          class="save"
+          .disabled=${this._saving || this._saveFailure === "session_expired"}
+          @click=${this._save}
           >${this.localize(
-            "ui.panel.greenautarky_setup.analytics.done"
+            this._saveFailure === "failed"
+              ? "ui.panel.greenautarky_setup.save.retry"
+              : "ui.panel.greenautarky_setup.analytics.done"
           )}</ha-button
         >
       </div>
@@ -319,14 +340,29 @@ class GaSetupAnalytics extends LitElement {
 
   private async _save(ev: Event) {
     ev.preventDefault();
-    // GA telemetry — best effort (non-admin users may not have WS permission yet)
-    try {
-      await setGATelemetryPreferences(this.hass, this._gaPrefs);
-    } catch (_err) {
-      // Proceed regardless — preferences can be saved later
+    if (this._saving || this._saveFailure === "session_expired") {
+      return;
     }
-    fireEvent(this, "ga-setup-step", { type: "analytics" });
+    this._saving = true;
+    this._saveFailure = undefined;
+    try {
+      await withTimeout(setGATelemetryPreferences(this.hass, this._gaPrefs));
+    } catch (err) {
+      const failure = classifySaveError(err);
+      if (failure !== "already_completed") {
+        this._saveFailure = failure;
+        this._failedTries += 1;
+        return;
+      }
+    } finally {
+      this._saving = false;
+    }
+    this._next();
   }
+
+  private _next = (): void => {
+    fireEvent(this, "ga-setup-step", { type: "analytics" });
+  };
 
   static get styles(): CSSResultGroup {
     return [

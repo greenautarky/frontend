@@ -87,12 +87,14 @@ export const verifyGASetupPin = (pin: string): Promise<GAPinResponse> =>
 export const setEthernetPreference = (
   enable: boolean
 ): Promise<{ status: string }> =>
-  fetch(`${GA_API_BASE}/ethernet`, {
-    method: "POST",
-    credentials: "same-origin",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ enable_ethernet: enable }),
-  }).then((r) => r.json());
+  handleFetchPromise<{ status: string }>(
+    fetch(`${GA_API_BASE}/ethernet`, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ enable_ethernet: enable }),
+    })
+  );
 
 export const completeGASetup = (): Promise<void> =>
   handleFetchPromise<void>(

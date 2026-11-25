@@ -194,6 +194,18 @@ export const messages: Record<string, string> = {
   "ui.panel.greenautarky_setup.ethernet.toggle_description":
     "Make the device reachable over Ethernet on the local network",
 
+  // Saving a step
+  "ui.panel.greenautarky_setup.save.failed":
+    "Your choice could not be saved. Please try again.",
+  "ui.panel.greenautarky_setup.save.unavailable":
+    "Your choice cannot be saved on this device.",
+  "ui.panel.greenautarky_setup.save.session_expired":
+    "Your choice was not saved because the session has expired. Please restart the setup.",
+  "ui.panel.greenautarky_setup.save.retry": "Try again",
+  "ui.panel.greenautarky_setup.save.restart": "Restart setup",
+  "ui.panel.greenautarky_setup.save.continue_unsaved":
+    "Continue without saving",
+
   // Panel-level
   "ui.panel.greenautarky_setup.panel.error_retry":
     "Something went wrong. Please try again.",

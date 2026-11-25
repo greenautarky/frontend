@@ -184,6 +184,17 @@ export const messages: Record<string, string> = {
   "ui.panel.greenautarky_setup.ethernet.toggle_description":
     "Gerät über Ethernet im lokalen Netzwerk erreichbar machen",
 
+  // Saving a step
+  "ui.panel.greenautarky_setup.save.failed":
+    "Ihre Auswahl konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.",
+  "ui.panel.greenautarky_setup.save.unavailable":
+    "Ihre Auswahl kann auf diesem Gerät nicht gespeichert werden.",
+  "ui.panel.greenautarky_setup.save.session_expired":
+    "Ihre Auswahl wurde nicht gespeichert, weil die Sitzung abgelaufen ist. Bitte starten Sie die Einrichtung neu.",
+  "ui.panel.greenautarky_setup.save.retry": "Erneut versuchen",
+  "ui.panel.greenautarky_setup.save.restart": "Einrichtung neu starten",
+  "ui.panel.greenautarky_setup.save.continue_unsaved": "Ohne Speichern weiter",
+
   // Panel-level
   "ui.panel.greenautarky_setup.panel.error_retry":
     "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
